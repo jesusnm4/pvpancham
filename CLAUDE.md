@@ -32,8 +32,10 @@ milestones live in `PLAN.md`.
   league context whose matchup rows are cached, so reuse a context across searches.
 - `app.js` builds HTML strings: every value from data goes through `escapeHtml`. Results render
   from `Engine.describeTeam`; keep display wording honest (a "weakness" can still be a win).
-- UI changes: check the page in headless Chromium (`/opt/node22/lib/node_modules/playwright`) at
-  desktop and 390px widths, light and dark, over http and `file://`, with no console errors.
+- UI changes: check the page in headless Playwright (installed globally, never in this repo; on
+  the user's Mac: `require('/opt/homebrew/lib/node_modules/playwright')`), not
+  the user's own Chrome, at desktop and 390px widths, light and dark, over http and `file://`,
+  with no console errors.
 - State lives in two places: `localStorage` (`pvphelper-state-v1` for the view,
   `pvphelper-ivs-v1` for IVs the viewer typed, per species) and the URL hash
   (`#l=&s=&p=&t=`, see `hashFor`/`readHash` in `app.js`). A hash on load wins over saved state.

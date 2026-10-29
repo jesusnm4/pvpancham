@@ -59,6 +59,11 @@ All in `js/engine.js`, pure and DOM-free.
    - given 1 Pokémon: every pair from the top 150 (about 11k teams, under a second)
    - given 2 Pokémon: every candidate for the third slot
 
+   - given no Pokémon (the top teams banner, for the selected format, always Best score): every
+     trio from the top 50 (about 20k teams, ~250 ms per format, cached); the best 3, with no Pokémon in more than two of
+     them. Opening one picks its lead and safe swap and selects the result with its closer; the
+     viewer's style is kept if the team fits it, otherwise it switches to Best score.
+
    GO Battle League allows one of each species, so partners sharing a Pokédex number with a pick
    (shadow forms included) are excluded. Results show the best 5 teams; with one pick, no
    partner appears in more than two of them so the list has variety.
@@ -121,10 +126,12 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
 6. **Pokémon images:** Pokémon GO icons copied into `img/pokemon/` (trimmed, 128 px WebP) by
    `scripts/update_images.py`, refreshed by the weekly Action; shown in team cards, the team list,
    search results and threat lists, with a purple glow for shadows. ✅
-8. **Fantasy Cup:** PvPoke cup `fantasy` (1,500 CP, Dragon / Steel / Fairy only) as a fourth
+7. **Fantasy Cup:** PvPoke cup `fantasy` (1,500 CP, Dragon / Steel / Fairy only) as a fourth
    format next to the leagues. Same engine; its own rankings file. Simulator agreement with
    PvPoke's listed 1-1 results: 90%. ✅
-7. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
+8. **Top teams banner:** the best three teams overall for the selected league or cup, with no
+   picks (`Engine.bestTeams`, Best score whatever the selected style), shown above the pickers. ✅
+9. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
    shielding), and limited-format cups.
 
 ## Research: Pokémon images

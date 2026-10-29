@@ -586,15 +586,43 @@
 
     teams.sort(function (x, y) { return y.score - x.score; });
     if (picks.length === 2) return teams.slice(0, limit);
+    return varied(teams, picks, limit);
+  }
 
+  // The first `limit` of `teams` (sorted best first) in which no member other than the fixed
+  // picks appears more than twice.
+  function varied(teams, fixed, limit) {
     var seen = {}, out = [];
     for (var k = 0; k < teams.length && out.length < limit; k++) {
-      var partners = teams[k].members.filter(function (m) { return m !== picks[0]; });
-      if (partners.some(function (p) { return (seen[p.id] || 0) >= 2; })) continue;
-      partners.forEach(function (p) { seen[p.id] = (seen[p.id] || 0) + 1; });
+      var others = teams[k].members.filter(function (m) { return fixed.indexOf(m) === -1; });
+      if (others.some(function (p) { return (seen[p.id] || 0) >= 2; })) continue;
+      others.forEach(function (p) { seen[p.id] = (seen[p.id] || 0) + 1; });
       out.push(teams[k]);
     }
     return out;
+  }
+
+  var OPEN_POOL = 50;  // Pokémon considered when building teams from scratch (about 20k teams)
+
+  // Best teams with no picks: every trio of different species from the league's top OPEN_POOL
+  // that fits the style, best first, with no Pokémon in more than two of them.
+  function bestTeams(ctx, style, limit) {
+    limit = limit || 3;
+    var pool = ctx.ranked.slice(0, OPEN_POOL).filter(function (e) { return battlerOf(ctx, e); });
+    var teams = [];
+    for (var i = 0; i < pool.length; i++) {
+      for (var j = i + 1; j < pool.length; j++) {
+        if (pool[i].pokemon.dex === pool[j].pokemon.dex) continue;
+        for (var k = j + 1; k < pool.length; k++) {
+          if (pool[k].pokemon.dex === pool[i].pokemon.dex || pool[k].pokemon.dex === pool[j].pokemon.dex) continue;
+          var members = [pool[i], pool[j], pool[k]];
+          var ordered = assignRoles(members, style);
+          if (ordered) teams.push({ members: ordered, score: scoreTeam(ctx, members) });
+        }
+      }
+    }
+    teams.sort(function (x, y) { return y.score - x.score; });
+    return varied(teams, [], limit);
   }
 
   var ROLE_NAMES = ['lead', 'swap', 'closer'];
@@ -668,6 +696,7 @@
     sharedWeaknesses: sharedWeaknesses,
     scoreTeam: scoreTeam,
     suggest: suggest,
+    bestTeams: bestTeams,
     describeTeam: describeTeam
   };
 })();

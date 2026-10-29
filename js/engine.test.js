@@ -270,6 +270,44 @@
     eq('every ranked Pokémon is eligible', bad.map(function (r) { return r.id; }), []);
   });
 
+  test('best teams with no picks (great league, every style)', function () {
+    var ctx = E.createContext(gm, raw['rankings-great'], 'great');
+    ['abc', 'pair', 'any'].forEach(function (style) {
+      var teams = E.bestTeams(ctx, style, 3);
+      eq(style + ': three teams', teams.length, 3);
+      ok(style + ': teams fit the style', teams.every(function (t) { return E.assignRoles(t.members, style) !== null; }));
+      ok(style + ': no duplicate species', teams.every(function (t) {
+        var dex = t.members.map(function (m) { return m.pokemon.dex; });
+        return dex[0] !== dex[1] && dex[0] !== dex[2] && dex[1] !== dex[2];
+      }));
+      ok(style + ': best first', teams.every(function (t, i) { return i === 0 || teams[i - 1].score >= t.score; }));
+      var counts = {};
+      teams.forEach(function (t) { t.members.forEach(function (m) { counts[m.id] = (counts[m.id] || 0) + 1; }); });
+      ok(style + ': no Pokémon in more than two teams', Object.keys(counts).every(function (id) { return counts[id] <= 2; }));
+    });
+  });
+
+  // The banner shows each format's best-score teams and opens one by picking its lead and safe
+  // swap, keeping the viewer's style if the team fits it (else Best score); the team must be
+  // among those results.
+  ['great', 'ultra', 'master', 'fantasy'].forEach(function (league) {
+    test(league + ': top teams banner', function () {
+      var ctx = E.createContext(gm, raw['rankings-' + league], league);
+      var teams = E.bestTeams(ctx, 'any', 3);
+      eq(league + ': three banner teams', teams.length, 3);
+      teams.forEach(function (t, i) {
+        ['abc', 'pair', 'any'].forEach(function (style) {
+          var used = E.assignRoles(t.members, style) ? style : 'any';
+          var third = t.members[2].id;
+          ok(league + ': banner team ' + (i + 1) + ' opens under ' + style,
+            E.suggest(ctx, [t.members[0].id, t.members[1].id], used, 5).some(function (s) {
+              return s.members.some(function (m) { return m.id === third; });
+            }), 'searched as ' + used);
+        });
+      });
+    });
+  });
+
   test('suggest rejects bad input', function () {
     var ctx = E.createContext(gm, raw['rankings-great'], 'great');
     throws('unknown Pokémon', function () { E.suggest(ctx, ['not_a_pokemon'], 'abc'); });

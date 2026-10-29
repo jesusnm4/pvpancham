@@ -32,6 +32,10 @@
   var described = [];  // Engine.describeTeam() of each, for the detail view
   var runId = 0;       // ignores results from a superseded search
   var revealResults = false;  // set by a user pick: scroll new results into view if off-screen
+  var TOP_COUNT = 3;
+  var topTeams = {};   // league -> Engine.bestTeams() for the banner (best score, no typing rule)
+  var topRunId = 0;    // ignores a banner search for a league the viewer already left
+  var openThird = null;  // a banner team being opened: select the result that has this third member
 
   // ---- Persistence: localStorage remembers the last view; the URL hash makes it shareable ----
   // Hash format: #l=great&s=abc&p=medicham,azumarill&t=2 (t is the 1-based selected team).
@@ -339,6 +343,8 @@
   function runSearch(notice) {
     var id = ++runId;
     var league = state.league;
+    var third = openThird;  // only the search a banner click starts selects its team
+    openThird = null;
     contextFor(league).then(function (ctx) {
       if (id !== runId) return;
       var dropped = validatePicks(ctx);
@@ -370,6 +376,11 @@
           showMessage('No ' + STYLE_NAMES[state.style] + ' team fits ' + (picks.length === 1 ? 'this pick' : 'these picks') +
             '. Try another team style.');
           return;
+        }
+        if (third) {
+          var found = teams.findIndex(function (t) { return t.members.some(function (m) { return m.id === third; }); });
+          state.selected = Math.max(found, 0);
+          save();
         }
         state.selected = Math.min(state.selected, teams.length - 1);
         renderTeams(ctx, notice);
@@ -525,6 +536,61 @@
         ? 'Each IV is a whole number from 0 to 15.' : ivResult(box.dataset.id, null);
   });
 
+  // ---- Top teams banner: the best teams built from scratch in the current league, with no typing rule ----
+
+  function renderTopTeams() {
+    var id = ++topRunId;
+    var league = state.league;
+    var hint = document.getElementById('top-teams-hint');
+    var list = document.getElementById('top-list');
+    document.getElementById('top-teams-title').textContent = 'Top ' + LEAGUE_NAMES[league] + ' teams';
+    if (!topTeams[league]) {
+      hint.textContent = 'Ranking teams…';
+      list.innerHTML = '';
+    }
+    contextFor(league).then(function (ctx) {
+      if (id !== topRunId) return;
+      // Like runSearch: let the message paint before the search blocks the main thread.
+      setTimeout(function () {
+        if (id !== topRunId) return;
+        if (!topTeams[league]) topTeams[league] = window.Engine.bestTeams(ctx, 'any', TOP_COUNT);
+        hint.textContent = 'Highest-scoring teams of any typing, built from the top 50 Pokémon in ' +
+          LEAGUE_NAMES[league] + '. Pick one to see its details.';
+        list.innerHTML = topTeams[league].map(function (t, i) {
+          var d = window.Engine.describeTeam(ctx, t);
+          return '<li><button type="button" class="top-team" data-top="' + i + '">' +
+            '<span class="team-rank">' + (i + 1) + '</span>' +
+            '<span class="team-icons">' + d.members.map(function (m) { return icon(m.id, 32); }).join('') + '</span>' +
+            '<span><span class="layout" title="Typing layout (lead / safe swap / closer)">' + d.layout + '</span> ' +
+            '<span class="team-score" title="Team score out of 100">' + d.displayScore + '</span></span>' +
+            '<span class="team-names">' + d.members.map(function (m) { return escapeHtml(m.name); }).join(' · ') + '</span>' +
+            '</button></li>';
+        }).join('');
+      }, 30);
+    }).catch(function () {
+      if (id === topRunId) hint.textContent = 'Could not load ' + LEAGUE_NAMES[league] + ' data.';
+    });
+  }
+
+  // Opens a banner team: its lead and safe swap become the picks, and the results select the
+  // suggestion with its closer (Engine tests check it is among them). The team style stays unless
+  // the team doesn't fit it, in which case it switches to Best score so the team can be shown.
+  document.getElementById('top-list').addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button[data-top]');
+    var team = btn && (topTeams[state.league] || [])[Number(btn.dataset.top)];
+    if (!team) return;
+    if (!window.Engine.assignRoles(team.members, state.style)) state.style = 'any';
+    state.picks = [team.members[0].id, team.members[1].id];
+    state.selected = 0;
+    openThird = team.members[2].id;
+    save();
+    syncRadios();
+    syncCombos();
+    renderQuickPicks();
+    revealResults = true;
+    runSearch();
+  });
+
   // ---- Form wiring ----
 
   function renderDataDate() {
@@ -551,6 +617,7 @@
     syncCombos();
     renderQuickPicks();
     runSearch();
+    renderTopTeams();
   });
 
   function bindRadios(name, field, onChange) {
@@ -573,7 +640,7 @@
     select.addEventListener('change', function () { window.Theme.set(select.value); });
   }
 
-  bindRadios('league', 'league', function () { syncCombos(); renderQuickPicks(); runSearch(); });
+  bindRadios('league', 'league', function () { syncCombos(); renderQuickPicks(); runSearch(); renderTopTeams(); });
   bindRadios('style', 'style', function () { runSearch(); });
   bindTheme();
   renderDataDate();
@@ -582,4 +649,5 @@
     history.replaceState(null, '', hashFor(state));
   }
   runSearch();
+  renderTopTeams();
 })();

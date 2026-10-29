@@ -188,6 +188,20 @@ h3 { font-size: 1rem; margin: 0; }
 :root[data-theme="dark"] .type[data-type="dark"]  { --t: #a08a8b; }
 :root[data-theme="dark"] .type[data-type="ghost"] { --t: #a46aa4; }
 
+/* ---- Top teams banner ---- */
+
+.top-teams { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.top-teams .hint { margin-bottom: 10px; }
+.top-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.top-team {
+  width: 100%; height: 100%; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 10px;
+  text-align: left; font: inherit; font-size: 0.875rem; color: var(--text); background: none; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+}
+.top-team:hover { border-color: var(--accent); }
+.top-team:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.top-team .team-names { grid-column: 1 / -1; }
+
 /* ---- Results ---- */
 
 .team-list { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 6px; }
@@ -262,6 +276,7 @@ h3 { font-size: 1rem; margin: 0; }
 .shared small { color: var(--muted); margin-right: 6px; }
 
 @media (max-width: 720px) {
+  .top-list { grid-template-columns: 1fr; }
   .members { grid-template-columns: 1fr; }
   .report { grid-template-columns: 1fr; }
 }
