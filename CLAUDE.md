@@ -46,6 +46,9 @@ milestones live in `PLAN.md`.
 - Wrap all `localStorage` access in try/catch, and re-validate persisted fields in `load()`.
 - Keep the README's status table and `PLAN.md` milestones current with each milestone. The user
   asked for the README to be kept up to date as the project grows.
-- Commit straight to `main` (the user's choice); no feature branches or PRs unless asked.
+- Work on `main`; no feature branches or PRs unless asked. When a change is ready, stop and tell the
+  user it is ready to review locally (what changed, how to see it, test results). Commit only
+  once they have reviewed it, and push to GitHub only after they give the go-ahead: a push goes
+  live on GitHub Pages straight away. Never push on your own initiative.
 - If a feature would need something GitHub Pages cannot provide (a server, secrets, server-side
   storage), raise it with the user before building it.
