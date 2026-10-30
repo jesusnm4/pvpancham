@@ -158,7 +158,7 @@ h1, h2, h3 { text-wrap: balance; }
 
 /* ---- Pokémon pickers ---- */
 
-.picks { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.picks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 
 .combo { position: relative; min-width: 0; }
 .combo label { display: block; font-size: var(--fs-sm); margin-bottom: 4px; }
@@ -211,6 +211,8 @@ h1, h2, h3 { text-wrap: balance; }
   border-top: 1px solid var(--border); padding-top: 16px;
 }
 .options fieldset.style { margin: 0; display: flex; align-items: center; gap: 12px; }
+.options fieldset.style:disabled { opacity: 0.5; }
+.options fieldset.style:disabled label { cursor: default; }
 .options legend { float: left; margin: 0; font-size: var(--fs-sm); color: var(--muted); font-weight: 400; }
 .explain { font-size: var(--fs-sm); color: var(--muted); }
 .explain summary { cursor: pointer; color: var(--accent); min-height: 40px; display: flex; align-items: center; }

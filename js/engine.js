@@ -600,21 +600,25 @@
     });
   }
 
-  // Suggests teams that complete the given picks (1 or 2 Pokémon ids, all ranked in the league).
+  // Suggests teams that complete the given picks (1 to 3 Pokémon ids, all ranked in the league).
   // Returns up to `limit` teams, best first: { members: [lead, swap, closer] entries, score }.
   // With one pick, no partner appears in more than two suggestions, so the list shows variety.
+  // Three picks are already a team: it comes back as the only result, with roles assigned and
+  // no typing rule (the style is ignored).
   function suggest(ctx, pickIds, style, limit) {
     limit = limit || 5;
     var picks = pickIds.map(function (id) { return ctx.byId[id]; });
     if (picks.some(function (p) { return !p || !battlerOf(ctx, p); })) {
       throw new Error('Pick is not ranked in this league');
     }
-    if (picks.length === 2 && picks[0].pokemon.dex === picks[1].pokemon.dex) {
+    var dex = picks.map(function (p) { return p.pokemon.dex; });
+    if (dex.some(function (d, i) { return dex.indexOf(d) !== i; })) {
       throw new Error('A team cannot have two of the same species');
     }
-    if (picks.length === 2 && isMega(picks[0]) && isMega(picks[1])) {
+    if (picks.filter(isMega).length > 1) {
       throw new Error('A team can have only one Mega or Primal Pokémon. Pick a non-Mega for one of them.');
     }
+    if (picks.length === 3) return [{ members: assignRoles(picks, 'any'), score: scoreTeam(ctx, picks) }];
     var pool = candidates(ctx, picks);
     var teams = [];
 
@@ -633,7 +637,7 @@
         }
       }
     } else {
-      throw new Error('Pick one or two Pokémon');
+      throw new Error('Pick one to three Pokémon');
     }
 
     teams.sort(function (x, y) { return y.score - x.score; });

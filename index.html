@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PvP Team Helper</title>
   <meta name="description" content="Build Pokémon GO PvP teams: suggested partners, moves, IVs, strengths and weaknesses.">
-  <script src="js/theme.js?v=20261030i"></script>
-  <link rel="stylesheet" href="styles.css?v=20261030i">
+  <script src="js/theme.js?v=20261030k"></script>
+  <link rel="stylesheet" href="styles.css?v=20261030k">
 </head>
 <body>
   <header class="site-header">
@@ -33,7 +33,7 @@
 
       <fieldset class="your-picks">
         <legend>Your Pokémon</legend>
-        <p class="hint">Pick one and get two partners, or pick two and get the best third.</p>
+        <p class="hint">Pick one and get two partners, pick two and get the best third, or pick three to check a team you have in mind.</p>
         <div class="picks">
           <div class="combo" data-slot="0">
             <label for="pick-0">First Pokémon</label>
@@ -52,6 +52,15 @@
               <button type="button" class="clear" data-action="clear" aria-label="Clear second Pokémon" hidden>×</button>
             </div>
             <ul class="combo-list" id="pick-1-list" role="listbox" aria-label="Matching Pokémon" hidden></ul>
+          </div>
+          <div class="combo" data-slot="2">
+            <label for="pick-2">Third Pokémon <small>(optional)</small></label>
+            <div class="combo-box">
+              <input id="pick-2" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false"
+                aria-controls="pick-2-list" autocomplete="off" spellcheck="false" placeholder="Search, e.g. Registeel">
+              <button type="button" class="clear" data-action="clear" aria-label="Clear third Pokémon" hidden>×</button>
+            </div>
+            <ul class="combo-list" id="pick-2-list" role="listbox" aria-label="Matching Pokémon" hidden></ul>
           </div>
         </div>
         <div class="quick" id="quick-picks"></div>
@@ -108,8 +117,8 @@
   <!-- ?v= on the site's own files: bump it whenever they change, so a browser holding an older
        copy (GitHub Pages lets files be cached for 10 minutes) never mixes old and new scripts. -->
   <script src="data/formats.js"></script>
-  <script src="js/data.js?v=20261030i"></script>
-  <script src="js/engine.js?v=20261030i"></script>
-  <script src="js/app.js?v=20261030i"></script>
+  <script src="js/data.js?v=20261030k"></script>
+  <script src="js/engine.js?v=20261030k"></script>
+  <script src="js/app.js?v=20261030k"></script>
 </body>
 </html>

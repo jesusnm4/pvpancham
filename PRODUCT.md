@@ -21,7 +21,8 @@ and can use in the next set, without needing to be an expert or read a ranking t
 
 ## Positioning
 
-- **Start from what you have:** pick one or two Pokémon, get the partners (or the best third).
+- **Start from what you have:** pick one or two Pokémon, get the partners (or the best third);
+  or pick all three to check a team you already have in mind.
 - **Follows the live GBL schedule:** shows only the leagues and cups on now or starting within a
   week, Mega formats included, read from the game's own data.
 - **Plain answers, fast:** a team, its moves and IVs, and why, in plain words.

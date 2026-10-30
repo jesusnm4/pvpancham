@@ -259,6 +259,9 @@ Pill buttons, 32px tall, transparent; border turns blue on hover.
 ### Search combobox
 Field with 8px corners and a clear (×) button; 2px blue focus outline. The dropdown is a Sheet
 with the one shadow; the active row gets a 14% blue tint. Rows show icon, name, types and rank.
+Three fields (first, second and third Pokémon, the last two optional) side by side on desktop,
+stacked on phones. With all three picked the team style fieldset is disabled (50% opacity) and
+the results open as "Your team" with no team list.
 
 ### Top teams
 A panel with a blue-tinted border holding three team buttons (icons, names, score); one column

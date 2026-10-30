@@ -45,7 +45,8 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   Pokémon of the selected league or cup, shown under the form before you pick anything (and
   below your results after); pick one to open it
 - Pokémon search by name or nickname (shadow forms included), plus one-tap popular picks
-- Pick one Pokémon to get two partners, or two to get the best third; the top 5 teams are listed
+- Pick one Pokémon to get two partners, or two to get the best third, or all three to check a team
+  you already have in mind ("Your team": its score, moves, IVs and matchups, no alternatives); the top 5 teams are listed
   with a team score out of 100, and the selected team leads with its score and how many of the
   top 100 it has a winning answer to
 - Per Pokémon: role (lead, safe swap, closer), its PvPoke rank and score in the league (linked to

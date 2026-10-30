@@ -314,6 +314,15 @@
         return ids.indexOf(teams[0].members[0].id) !== -1 && ids.indexOf(teams[0].members[1].id) !== -1;
       }));
 
+      var trio = teams[0].members.map(function (m) { return m.id; });
+      var own = E.suggest(ctx, trio.slice().reverse(), 'abc', 5);
+      ok(league + ': three picks give that team back, scored the same', own.length === 1 &&
+        own[0].members.map(function (m) { return m.id; }).sort().join() === trio.slice().sort().join() &&
+        Math.abs(own[0].score - teams[0].score) < 1e-9);
+      var dupThrew = false;
+      try { E.suggest(ctx, [trio[0], trio[1], trio[0]], 'any', 5); } catch (err) { dupThrew = /same species/.test(err.message); }
+      ok(league + ': three picks with a repeated species are refused', dupThrew);
+
       var d = E.describeTeam(ctx, teams[0]);
       eq(league + ': roles', d.members.map(function (m) { return m.role; }), ['lead', 'swap', 'closer']);
       ok(league + ': members carry their PvPoke rank', d.members.every(function (m) {

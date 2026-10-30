@@ -73,11 +73,10 @@
     var style = STYLE_ALIASES[saved.style] || saved.style;
     if (STYLES.indexOf(style) !== -1) s.style = style;
     if (Array.isArray(saved.picks)) {
-      s.picks = [0, 1].map(function (i) {
+      s.picks = compactPicks([0, 1, 2].map(function (i) {
         var id = saved.picks[i];
         return typeof id === 'string' && PICK_ID.test(id) ? id : null;
-      });
-      if (!s.picks[0] && s.picks[1]) s.picks = [s.picks[1], null];
+      }));
     }
     if (typeof saved.selected === 'number' && saved.selected >= 0 && saved.selected < 5) s.selected = Math.floor(saved.selected);
     if (typeof saved.noElite === 'boolean') s.noElite = saved.noElite;
@@ -88,6 +87,13 @@
         ? saved.compare : null;
     }
     return s;
+  }
+
+  // Filled slots first, padded to the three slots, so "n picks" always means slots 0 to n-1.
+  function compactPicks(picks) {
+    var out = picks.filter(Boolean).slice(0, 3);
+    while (out.length < 3) out.push(null);
+    return out;
   }
 
   function readHash() {
@@ -112,13 +118,13 @@
   }
 
   function load() {
-    var s = { league: 'great', style: 'abc', picks: [null, null], selected: 0, noElite: false, compare: null, pilotHidden: false };
+    var s = { league: 'great', style: 'abc', picks: [null, null, null], selected: 0, noElite: false, compare: null, pilotHidden: false };
     try {
       applySaved(s, JSON.parse(localStorage.getItem(KEY) || '{}'));
     } catch (e) { /* private mode or bad JSON: keep defaults */ }
     var shared = readHash();
     // A shared link replaces the remembered view entirely, including empty slots.
-    if (shared) applySaved(s, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected, noElite: shared.noElite, compare: shared.compare });
+    if (shared) applySaved(s, { league: shared.league, style: shared.style, picks: shared.picks, selected: shared.selected, noElite: shared.noElite, compare: shared.compare });
     if (shared && shared.league && LEAGUES.indexOf(shared.league) === -1) {
       startNotice = 'That link is for a cup that is no longer in GO Battle League, so it opened in ' + LEAGUE_NAMES[s.league] + '.';
     }
@@ -249,11 +255,12 @@
       var ctx = contexts[contextKey(state.league)];
       var q = normalize(query);
       if (!ctx || !q) return [];
-      var other = state.picks[1 - slot];
-      var otherDex = other && ctx.byId[other] ? ctx.byId[other].pokemon.dex : null;
+      // The other slots' species can't be picked again.
+      var otherDex = state.picks.filter(function (id, i) { return i !== slot && id && ctx.byId[id]; })
+        .map(function (id) { return ctx.byId[id].pokemon.dex; });
       var starts = [], contains = [];
       ctx.ranked.forEach(function (e) {
-        if (e.pokemon.dex === otherDex) return;
+        if (otherDex.indexOf(e.pokemon.dex) !== -1) return;
         var name = normalize(e.pokemon.name);
         var nick = (e.pokemon.nicknames || []).some(function (n) { return normalize(n).indexOf(q) === 0; });
         if (name.indexOf(q) === 0 || nick) starts.push(e);
@@ -344,12 +351,17 @@
 
   function syncCombos() {
     combos.forEach(function (c) { c.sync(); });
+    // Three picks are a finished team: the team style has nothing to choose.
+    var full = currentPicks().length === 3;
+    var style = document.querySelector('fieldset.style');
+    style.disabled = full;
+    style.title = full ? 'Your three Pokémon are the team, so the team style doesn’t apply' : '';
   }
 
   function setPick(slot, id) {
     state.picks[slot] = id;
-    // Keep the filled slot first, so "one pick" always means slot 0.
-    if (!state.picks[0] && state.picks[1]) state.picks = [state.picks[1], null];
+    // Keep the filled slots first, so "one pick" always means slot 0.
+    state.picks = compactPicks(state.picks);
     state.selected = 0;
     state.compare = null;
     save();
@@ -362,8 +374,7 @@
   // Drops saved picks that are not ranked in the current league.
   function validatePicks(ctx) {
     var dropped = state.picks.filter(function (id) { return id && !ctx.byId[id]; });
-    state.picks = state.picks.filter(function (id) { return id && ctx.byId[id]; });
-    while (state.picks.length < 2) state.picks.push(null);
+    state.picks = compactPicks(state.picks.filter(function (id) { return id && ctx.byId[id]; }));
     if (dropped.length) save();
     return dropped;
   }
@@ -371,7 +382,7 @@
   function renderQuickPicks() {
     var el = document.getElementById('quick-picks');
     var ctx = contexts[contextKey(state.league)];
-    if (!ctx || currentPicks().length === 2) { el.innerHTML = ''; return; }
+    if (!ctx || currentPicks().length >= 2) { el.innerHTML = ''; return; }
     var taken = currentPicks().map(function (id) { return ctx.byId[id].pokemon.dex; });
     var top = ctx.ranked.filter(function (e) { return taken.indexOf(e.pokemon.dex) === -1; }).slice(0, QUICK_PICKS);
     el.innerHTML = '<span class="quick-label">Popular in ' + LEAGUE_NAMES[state.league] + ':</span> ' +
@@ -383,7 +394,7 @@
   document.getElementById('quick-picks').addEventListener('click', function (ev) {
     var btn = ev.target.closest('button[data-id]');
     if (!btn) return;
-    setPick(state.picks[0] ? 1 : 0, btn.dataset.id);
+    setPick(currentPicks().length, btn.dataset.id);
   });
 
   // ---- Results ----
@@ -480,10 +491,10 @@
           teams = window.Engine.suggest(ctx, picks, state.style, 5);
         } catch (err) {
           // Two Megas: offer to drop either one.
-          var megaFixes = picks.length === 2 && picks.every(function (p) { return isMegaId(ctx, p); })
+          var megaFixes = picks.filter(function (p) { return isMegaId(ctx, p); }).length > 1
             ? picks.map(function (p, slot) {
-                return { label: 'Remove ' + ctx.byId[p].pokemon.name, run: function () { setPick(slot, null); } };
-              })
+                return isMegaId(ctx, p) ? { label: 'Remove ' + ctx.byId[p].pokemon.name, run: function () { setPick(slot, null); } } : null;
+              }).filter(Boolean)
             : [];
           showMessage(escapeHtml(err.message), 'error', megaFixes);
           return;
@@ -515,7 +526,9 @@
     if (state.compare !== null && (state.compare >= teams.length || state.compare === state.selected)) { state.compare = null; save(); }
     described = teams.map(function (t) { return window.Engine.describeTeam(ctx, t); });
     var picks = currentPicks();
-    var heading = picks.length === 1 ? 'Best partners for ' + escapeHtml(ctx.byId[picks[0]].pokemon.name)
+    var own = picks.length === 3;   // the viewer's own team: no list of alternatives
+    var heading = own ? 'Your team'
+      : picks.length === 1 ? 'Best partners for ' + escapeHtml(ctx.byId[picks[0]].pokemon.name)
       : 'Best third for ' + escapeHtml(ctx.byId[picks[0]].pokemon.name) + ' and ' + escapeHtml(ctx.byId[picks[1]].pokemon.name);
 
     var list = described.map(function (d, i) {
@@ -534,9 +547,10 @@
       (notice ? '<p class="notice">' + escapeHtml(notice) + '</p>' + fixButtons(actions) : fixButtons([])) +
       '<div class="results-head"><h2>' + heading + '</h2>' +
       '<button type="button" class="chip" data-action="share">Copy link</button></div>' +
-      '<p class="hint">' + LEAGUE_NAMES[state.league] + ', ' + STYLE_HINTS[state.style] + (state.noElite ? ', without Elite TM moves' : '') +
-      '. Team score (out of 100) rates how well the team covers the top 100 Pokémon in ' + LEAGUE_NAMES[state.league] + '.</p>' +
-      '<ol class="team-list">' + list + '</ol>' +
+      '<p class="hint">' + LEAGUE_NAMES[state.league] + (own ? '' : ', ' + STYLE_HINTS[state.style]) + (state.noElite ? ', without Elite TM moves' : '') +
+      '. Team score (out of 100) rates how well the team covers the top 100 Pokémon in ' + LEAGUE_NAMES[state.league] + '.' +
+      (own ? ' Roles are set from each Pokémon’s PvPoke role scores.' : '') + '</p>' +
+      (own ? '' : '<ol class="team-list">' + list + '</ol>') +
       '<div id="team-detail">' + renderDetail(described[state.selected]) + '</div>';
     // On a phone the results start below the fold, and a top team is opened from below them;
     // after a pick, bring them into view.
@@ -997,7 +1011,7 @@
     var team = btn && (topTeams[contextKey(state.league)] || [])[Number(btn.dataset.top)];
     if (!team) return;
     if (!window.Engine.assignRoles(team.members, state.style)) state.style = 'any';
-    state.picks = [team.members[0].id, team.members[1].id];
+    state.picks = [team.members[0].id, team.members[1].id, null];
     state.selected = 0;
     state.compare = null;
     openThird = team.members[2].id;
