@@ -35,6 +35,12 @@
     AAA: 'all three share a type'
   };
   var ROLE_NAMES = { lead: 'Lead', swap: 'Safe swap', closer: 'Closer' };
+  // One line per role, shown on each member card for players who don't know the terms.
+  var ROLE_NOTES = {
+    lead: 'Starts the battle.',
+    swap: 'Switch to it when your lead is losing.',
+    closer: 'Comes in last to finish the battle.'
+  };
   var MAX_MATCHES = 8;
   var QUICK_PICKS = 6;
   var PICK_ID = /^[a-z0-9_]{1,64}$/;   // shape of a PvPoke species id
@@ -47,6 +53,7 @@
   var described = [];  // Engine.describeTeam() of each, for the detail view
   var runId = 0;       // ignores results from a superseded search
   var revealResults = false;  // set by a user pick: scroll new results into view if off-screen
+  var compareWith = null;     // index of a suggested team to compare the selected one with (not saved)
   var TOP_COUNT = 3;
   var topTeams = {};   // contextKey -> Engine.bestTeams() for the banner (best score, no typing rule)
   var topRunId = 0;    // ignores a banner search for a league the viewer already left
@@ -435,6 +442,7 @@
   }
 
   function renderTeams(ctx, notice) {
+    compareWith = null;
     described = teams.map(function (t) { return window.Engine.describeTeam(ctx, t); });
     var picks = currentPicks();
     var heading = picks.length === 1 ? 'Best partners for ' + escapeHtml(ctx.byId[picks[0]].pokemon.name)
@@ -445,7 +453,8 @@
         '<span class="team-rank">' + (i + 1) + '</span>' +
         '<span class="team-icons">' + d.members.map(function (m) { return icon(m.id, 32); }).join('') + '</span>' +
         '<span class="team-names">' + d.members.map(function (m) { return escapeHtml(m.name); }).join(' · ') + '</span>' +
-        '<span class="layout" title="Typing layout (lead / safe swap / closer)">' + d.layout + '</span>' +
+        // With the ABC style every team is ABC, so the tag would only repeat itself.
+        (state.style === 'abc' ? '' : '<span class="layout" title="Typing layout (lead / safe swap / closer)">' + d.layout + '</span>') +
         '<span class="team-score" title="Team score out of 100">' + d.displayScore + '</span></button></li>';
     }).join('');
 
@@ -501,7 +510,7 @@
       }
       return '<article class="member">' +
         '<div class="member-head">' + icon(m.id, 64) + '<div>' +
-        '<p class="role">' + ROLE_NAMES[m.role] + '</p>' +
+        '<p class="role">' + ROLE_NAMES[m.role] + ' <span class="role-note">' + ROLE_NOTES[m.role] + '</span></p>' +
         '<h3>' + escapeHtml(m.name) + '</h3>' +
         '<p class="types">' + typeChips(m.types) + '</p>' +
         '<p class="pvp-rank"><a href="https://pvpoke.com/rankings/' + LEAGUE_CUP[state.league] + '/' + LEAGUE_CP[state.league] + '/overall/' +
@@ -539,7 +548,8 @@
       '<div><h3>' + d.members.map(function (m) { return escapeHtml(m.name); }).join(' · ') + '</h3>' +
       '<p class="coverage">Has a winning answer to <strong>' + d.beats + ' of the top ' + d.threatCount +
       '</strong> Pokémon in ' + LEAGUE_NAMES[state.league] + '.</p>' +
-      (layoutNote ? '<p class="hint">' + layoutNote + '</p>' : '') + '</div></div>' +
+      (layoutNote ? '<p class="hint">' + layoutNote + '</p>' : '') + compareControl() + '</div></div>' +
+      compareBlock(d) +
       metaGrid(d.meta) +
       '<div class="members">' + members + '</div>' +
       // The grid above shows every top-30 matchup; this names the three closest, which decide games.
@@ -549,6 +559,75 @@
       '<section><h3>Shared weaknesses</h3>' + shared + '</section>' +
       '</div>';
   }
+
+  // ---- Compare the selected team with another suggestion ----
+
+  function teamLabel(i) {
+    return '#' + (i + 1) + ' ' + described[i].members.map(function (m) { return m.name; }).join(' · ');
+  }
+
+  function compareControl() {
+    if (described.length < 2) return '';
+    var options = described.map(function (d, i) {
+      if (i === state.selected) return '';
+      return '<option value="' + i + '"' + (i === compareWith ? ' selected' : '') + '>' + escapeHtml(teamLabel(i)) + ' (' + d.displayScore + ')</option>';
+    }).join('');
+    return '<label class="compare">Compare with <select data-action="compare"><option value="">another team…</option>' + options + '</select></label>';
+  }
+
+  function tallyOf(meta) {
+    var c = { win: 0, even: 0, loss: 0 };
+    (meta || []).forEach(function (t) { c[band(t.rating)]++; });
+    return c;
+  }
+
+  // Side by side: score, answers to the top 100, the top-30 tally, then the top-30 threats where
+  // the two teams land in different bands (win / toss-up / loss).
+  function compareBlock(d) {
+    var o = compareWith === null ? null : described[compareWith];
+    if (!o || !d.meta || !o.meta) return '';
+    var a = tallyOf(d.meta), b = tallyOf(o.meta);
+    var rank = { loss: 0, even: 1, win: 2 };
+    var better = [], worse = [];
+    d.meta.forEach(function (t, i) {
+      var mine = band(t.rating), theirs = band(o.meta[i].rating);
+      if (mine === theirs) return;
+      var item = { t: t, i: i, mine: mine, theirs: theirs };
+      (rank[mine] > rank[theirs] ? better : worse).push(item);
+    });
+    function row(label, x, y) {
+      return '<tr><th scope="row">' + label + '</th><td>' + x + '</td><td>' + y + '</td></tr>';
+    }
+    var me = '#' + (state.selected + 1), them = '#' + (compareWith + 1);
+    function diffList(title, items) {
+      if (!items.length) return '';
+      return '<div><h4>' + title + '</h4><ul class="diff-list">' + items.map(function (it) {
+        return '<li>' + icon(it.t.id, 32) + '<span><strong>' + escapeHtml(it.t.name) + '</strong><br><small>' +
+          me + ': ' + BAND_NAMES[it.mine] + ' · ' + them + ': ' + BAND_NAMES[it.theirs] + '</small></span></li>';
+      }).join('') + '</ul></div>';
+    }
+    var mineLabel = '#' + (state.selected + 1) + '<br><small>this team</small>', theirLabel = '#' + (compareWith + 1);
+    return '<section class="comparison" aria-label="Comparison with team ' + (compareWith + 1) + '">' +
+      '<table><thead><tr><td></td><th scope="col">' + mineLabel + '</th><th scope="col">' + theirLabel + '</th></tr></thead><tbody>' +
+      row('Team score', d.displayScore, o.displayScore) +
+      row('Winning answers, top ' + d.threatCount, d.beats, o.beats) +
+      row('Top 30: wins · toss-ups · losses', a.win + ' · ' + a.even + ' · ' + a.loss, b.win + ' · ' + b.even + ' · ' + b.loss) +
+      '</tbody></table>' +
+      (better.length || worse.length
+        ? '<p class="hint">Top-30 Pokémon the two teams get different results against (the rest are the same):</p>' +
+          '<div class="diffs">' + diffList(me + ' does better against', better) + diffList(them + ' does better against', worse) + '</div>'
+        : '<p class="hint">Same results against every Pokémon in the top 30.</p>') +
+      '</section>';
+  }
+
+  resultsEl().addEventListener('change', function (ev) {
+    var select = ev.target.closest('select[data-action="compare"]');
+    if (!select) return;
+    compareWith = select.value === '' ? null : Number(select.value);
+    document.getElementById('team-detail').innerHTML = renderDetail(described[state.selected]);
+    var again = resultsEl().querySelector('select[data-action="compare"]');
+    if (again) again.focus();
+  });
 
   // The top 30 of the meta, each tinted by the team's best matchup against it. Tapping one names
   // the member that answers it in the note under the grid.
@@ -607,6 +686,7 @@
     var btn = ev.target.closest('button[data-team]');
     if (!btn || !described[Number(btn.dataset.team)]) return;
     state.selected = Number(btn.dataset.team);
+    if (compareWith === state.selected) compareWith = null;
     save();
     Array.prototype.forEach.call(resultsEl().querySelectorAll('.team-option'), function (b) {
       b.setAttribute('aria-pressed', String(b === btn));

@@ -118,7 +118,7 @@ components:
 
 # Design System: PvP Team Helper
 
-<!-- Recorded from the code at 2d8bc5c and updated through design phase 4 (polish) in
+<!-- Recorded from the code at 2d8bc5c and updated through design phase 4 (polish) and its follow-ups in
      PLAN.md. Update this file as each phase lands. -->
 
 ## Overview
@@ -285,8 +285,17 @@ a cell outlines it in the accent and writes the threat, its types, the team's be
 the verdict in the note below. Press: scale 0.95 over 120ms on a strong ease-out; none with
 reduced motion.
 
+### Comparison
+"Compare with" is a select under the team header listing the other suggestions. Choosing one
+opens a 10px bordered block: a three-row table (score, winning answers, top-30 tally; 14px,
+tabular, right-aligned figures, muted row labels), a one-line hint, and two lists of 32px icons,
+"#A does better against" and "#B does better against", each item naming the threat and both
+teams' results ("#1: win · #3: toss-up"). Teams are always named by number, never "here". On phones the lists stack and the select
+takes the full width.
+
 ### Member card
-10px card: 64px icon, role label in blue caps, name, type chips, PvPoke rank link, then a
+10px card: 64px icon, role label in accent caps followed by a one-line plain note of what the
+role does (muted, sentence case), name, type chips, PvPoke rank link, then a
 definition list of moves (Elite and Mega tags), IVs, and a collapsible "Check your IVs".
 
 ### Report

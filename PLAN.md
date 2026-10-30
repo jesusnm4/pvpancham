@@ -196,6 +196,11 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
       one focus, press and hover layer; browser parts in the accent; Mega tags filled, Elite
       outlined; results stay visible, dimmed, during a new search; `?v=` on the site's own
       files so a cached old script never mixes with a new one. ✅
+   5. *Critique follow-ups (27 → 31/40, aiming past 32):* each member card says what its role
+      means, and "What do these mean?" covers roles; the ABC tag is left off team rows when the
+      ABC style makes every team ABC; **Compare with** puts the selected team beside another
+      suggestion (score, answers to the top 100, top-30 tally, and the top-30 threats where they
+      land in different bands). The comparison isn't saved or shared. ✅
 13. **Piloting advice:** a short, plain note per team on how to play it (lead, when to swap, what
    to save shields for), generated from its roles, moves and matchups. Wording to be decided.
 14. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter

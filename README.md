@@ -54,6 +54,10 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   (tap one to see which member answers it); its 3 closest matchups; and any type that hits two
   members super-effectively
 - The page takes the league's colour: blue for Great, gold for Ultra, purple for Master
+- Each team member says what its role means (lead starts the battle, safe swap comes in when
+  the lead is losing, closer finishes)
+- **Compare with** another suggested team: score, winning answers to the top 100, the top-30
+  wins / toss-ups / losses, and the top-30 Pokémon one team handles better than the other
 - **Check your IVs** on any team member: your spread's rank among all IV combinations, its stat
   product as a % of rank 1, and the level and CP it reaches under the cap
 - **Use Elite moves** (on by default): turn it off and your team uses each Pokémon's next best moves

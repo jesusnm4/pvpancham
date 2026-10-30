@@ -327,6 +327,26 @@ h1, h2, h3 { text-wrap: balance; }
 .meta-note strong { color: var(--text); }
 @media (hover: hover) { .meta-cell:hover { border-color: var(--band); } }
 
+/* ---- Compare two suggested teams ---- */
+
+.compare { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; font-size: var(--fs-sm); color: var(--muted); }
+.compare select { font: inherit; min-height: 36px; max-width: 16rem; text-overflow: ellipsis; }
+.comparison { margin: 0 0 16px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; }
+.comparison table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.comparison th, .comparison td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--border); }
+.comparison th[scope="row"] { text-align: left; font-weight: 400; color: var(--muted); }
+.comparison td { white-space: nowrap; }
+.comparison thead small { font-weight: 400; color: var(--muted); }
+.comparison thead th { font-weight: 600; }
+.comparison tbody tr:last-child > * { border-bottom: 0; }
+.comparison > .hint { margin: 12px 0 0; }
+.diffs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin-top: 8px; }
+.diffs h4 { margin: 0 0 6px; font-size: var(--fs-sm); }
+.diff-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: var(--fs-sm); }
+.diff-list li { display: flex; align-items: center; gap: 8px; }
+.diff-list .poke { width: 32px; height: 32px; }
+.diff-list small { color: var(--muted); }
+
 /* Team header: the score leads, the names and what the score means beside it. */
 .team-head { display: flex; align-items: flex-start; gap: 16px; margin: 24px 0 16px; }
 .team-figure { margin: 0; flex-shrink: 0; text-align: center; min-width: 3.5rem; }
@@ -337,6 +357,7 @@ h1, h2, h3 { text-wrap: balance; }
 .team-figure small { font-size: var(--fs-xs); color: var(--muted); }
 .team-head h3 { font-size: var(--fs-lg); line-height: 1.25; letter-spacing: -0.01em; margin: 0 0 4px; }
 .team-head p { margin: 0; }
+.team-head > div { flex: 1; min-width: 0; }   /* lets the compare select shrink to the screen */
 .team-head .coverage strong { font-variant-numeric: tabular-nums; }
 
 .members { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
@@ -348,6 +369,7 @@ h1, h2, h3 { text-wrap: balance; }
 .pvp-rank a { font-weight: 600; text-decoration: none; }
 .pvp-rank a:hover { text-decoration: underline; }
 .member .role { margin: 0; font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); }
+.member .role-note { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted); }
 .member .types { margin: 4px 0; display: flex; gap: 4px; flex-wrap: wrap; }
 .member dl { margin: 0; font-size: var(--fs-sm); }
 .member dt { color: var(--muted); font-size: var(--fs-xs); margin-top: 8px; }
@@ -420,6 +442,9 @@ h1, h2, h3 { text-wrap: balance; }
   .member dl, .threats, .ivcheck { font-size: var(--fs-md); }
   .team-head { gap: 12px; }
   .meta-grid { grid-template-columns: repeat(6, 1fr); }
+  .diffs { grid-template-columns: 1fr; }
+  .compare { display: flex; flex-wrap: wrap; }
+  .compare select { max-width: 100%; min-width: 0; flex: 1; }
   /* Room for the full name, so e.g. a Pokémon and its shadow form never truncate to the same text. */
   .opt-meta .type { display: none; }
   .opt-name { white-space: normal; overflow: visible; }
