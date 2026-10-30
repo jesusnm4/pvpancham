@@ -76,7 +76,8 @@ All in `js/engine.js`, pure and DOM-free.
    buffs, Mimikyu's Disguise and Cramorant's Gulp Missile are modelled. Megas follow PvPoke: some
    ("supermega", e.g. Mewtwo X/Y, Dragonite) have a "+" Mega move as a third charged move, which
    gets ×1.2 damage at Mega level 3 and ×1.3 at level 4 (supermegas), and supermegas power up to
-   level 52. The game sets no per-team Mega limit. The rating is PvPoke's battle rating (500 =
+   level 52. A team holds at most one Mega or Primal, since a trainer can have only one
+   Mega-Evolved Pokémon at a time. The rating is PvPoke's battle rating (500 =
    even, 1000 = flawless win), averaged over 0-0, 1-1 and 2-2 shields.
 
    Checked against the top 5 wins and losses PvPoke lists for each of the top 100 Pokémon (its
@@ -200,9 +201,15 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
       means, and "What do these mean?" covers roles; the ABC tag is left off team rows when the
       ABC style makes every team ABC; **Compare with** puts the selected team beside another
       suggestion (score, answers to the top 100, top-30 tally, and the top-30 threats where they
-      land in different bands). The comparison isn't saved or shared. ✅
-13. **Piloting advice:** a short, plain note per team on how to play it (lead, when to swap, what
-   to save shields for), generated from its roles, moves and matchups. Wording to be decided.
+      land in different bands), kept in the link as `c=` and across reloads; **saved teams** on
+      this device (`pvphelper-saved-v1`, up to 12), reopened from a "Your saved teams" panel. ✅
+13. **Piloting advice:** "How to play it" on each team, built from `describeTeam().pilot`: what the
+   lead wins alone, which opposing leads to switch away from (lead loses, safe swap wins), the
+   top-30 threats only the closer beats, fast moves to the first charged move, and shared
+   weaknesses (naming the Pokémon each type hits). All from the 1-1 shield simulations against the
+   top 30, and said so. It can be collapsed, and stays as the viewer left it. ✅
+   Also: teams hold at most one Mega or Primal (Master League (Megas) had been suggesting three),
+   and Shared weaknesses names which of your Pokémon each type hits.
 14. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
    shielding), and limited-format cups.
 

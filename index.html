@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PvP Team Helper</title>
   <meta name="description" content="Build Pokémon GO PvP teams: suggested partners, moves, IVs, strengths and weaknesses.">
-  <script src="js/theme.js?v=20261030d"></script>
-  <link rel="stylesheet" href="styles.css?v=20261030d">
+  <script src="js/theme.js?v=20261030g"></script>
+  <link rel="stylesheet" href="styles.css?v=20261030g">
 </head>
 <body>
   <header class="site-header">
@@ -84,6 +84,12 @@
       <p class="placeholder">Loading Pokémon data…</p>
     </section>
 
+    <!-- Teams the viewer saved on this device (localStorage); hidden while there are none. -->
+    <section class="panel saved-teams" id="saved-teams" aria-labelledby="saved-teams-title" hidden>
+      <h2 id="saved-teams-title">Your saved teams</h2>
+      <ul class="saved-list" id="saved-list"></ul>
+    </section>
+
     <!-- With no picks this sits right under the form as the starting point; with picks, below the results. -->
     <section class="panel top-teams" id="top-teams" aria-labelledby="top-teams-title">
       <h2 id="top-teams-title">Top teams</h2>
@@ -102,8 +108,8 @@
   <!-- ?v= on the site's own files: bump it whenever they change, so a browser holding an older
        copy (GitHub Pages lets files be cached for 10 minutes) never mixes old and new scripts. -->
   <script src="data/formats.js"></script>
-  <script src="js/data.js?v=20261030d"></script>
-  <script src="js/engine.js?v=20261030d"></script>
-  <script src="js/app.js?v=20261030d"></script>
+  <script src="js/data.js?v=20261030g"></script>
+  <script src="js/engine.js?v=20261030g"></script>
+  <script src="js/app.js?v=20261030g"></script>
 </body>
 </html>

@@ -285,6 +285,18 @@ a cell outlines it in the accent and writes the threat, its types, the team's be
 the verdict in the note below. Press: scale 0.95 over 120ms on a strong ease-out; none with
 reduced motion.
 
+### How to play it
+After the meta grid: a `<details>` (open by default, remembered when closed) whose summary holds
+the h3 and the accent disclosure arrow, then a numbered list of up to five plain sentences (Pokémon names bold),
+and a hint saying they come from simulated 1-1 shield battles against the top 30. No icons or
+colour; it reads as notes.
+
+### Saved teams
+"Save team" is a chip in the team header's action row (`aria-pressed`; "Saved" in the accent when
+on). "Your saved teams" is a panel between results and top teams, hidden when empty: rows like
+the team list (icons, names, format, score) with a separate "Remove" button; on phones the names
+wrap to their own line. A team from a cup that has ended stays listed, dimmed, removable only.
+
 ### Comparison
 "Compare with" is a select under the team header listing the other suggestions. Choosing one
 opens a 10px bordered block: a three-row table (score, winning answers, top-30 tally; 14px,
@@ -301,7 +313,8 @@ definition list of moves (Elite and Mega tags), IVs, and a collapsible "Check yo
 ### Report
 Under the member cards, two columns (one on phones): **Closest matchups**, the three top-30
 threats with the team's lowest best rating (32px icon, name, types, best answer and verdict), and
-**Shared weaknesses**, the types that hit two or more members super-effectively. The grid covers
+**Shared weaknesses**, one row per attack type that hits two or more members super-effectively:
+its type chip, then the members it hits ("Morpeko (Full Belly) and Medicham", "(all three)"). The grid covers
 the rest, so there is no separate strengths list.
 
 ### Move tags

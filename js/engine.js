@@ -575,21 +575,28 @@
   }
 
   // Attacking types that are super-effective against two or more of the given Pokémon.
+  // Attack types that hit two or more of the Pokémon super-effectively, with which ones (names).
   function sharedWeaknesses(pokemonList) {
     var out = [];
     TYPES.forEach(function (t) {
-      var count = pokemonList.filter(function (p) { return isSuperEffective(t, p.types); }).length;
-      if (count >= 2) out.push({ type: t, count: count });
+      var hit = pokemonList.filter(function (p) { return isSuperEffective(t, p.types); });
+      if (hit.length >= 2) out.push({ type: t, count: hit.length, names: hit.map(function (p) { return p.name; }) });
     });
     return out.sort(function (x, y) { return y.count - x.count; });
   }
 
+  // Megas and Primals (PvPoke tags both 'mega'). A trainer can have only one Mega-Evolved
+  // Pokémon at a time, so a team holds at most one.
+  function isMega(e) { return !!(e.pokemon.tags && e.pokemon.tags.indexOf('mega') !== -1); }
+
   // Ranked Pokémon that may join a team with these picks: GO Battle League allows one of each
-  // species, so anything sharing a Pokédex number with a pick is out (shadow forms included).
+  // species, so anything sharing a Pokédex number with a pick is out (shadow forms included),
+  // and once a pick is a Mega no other Mega can join.
   function candidates(ctx, picks) {
     var dex = picks.map(function (e) { return e.pokemon.dex; });
+    var megaTaken = picks.some(isMega);
     return ctx.ranked.slice(0, CANDIDATE_COUNT).filter(function (e) {
-      return dex.indexOf(e.pokemon.dex) === -1 && battlerOf(ctx, e);
+      return dex.indexOf(e.pokemon.dex) === -1 && !(megaTaken && isMega(e)) && battlerOf(ctx, e);
     });
   }
 
@@ -605,6 +612,9 @@
     if (picks.length === 2 && picks[0].pokemon.dex === picks[1].pokemon.dex) {
       throw new Error('A team cannot have two of the same species');
     }
+    if (picks.length === 2 && isMega(picks[0]) && isMega(picks[1])) {
+      throw new Error('A team can have only one Mega or Primal Pokémon. Pick a non-Mega for one of them.');
+    }
     var pool = candidates(ctx, picks);
     var teams = [];
 
@@ -618,7 +628,7 @@
     } else if (picks.length === 1) {
       for (var i = 0; i < pool.length; i++) {
         for (var j = i + 1; j < pool.length; j++) {
-          if (pool[i].pokemon.dex === pool[j].pokemon.dex) continue;
+          if (pool[i].pokemon.dex === pool[j].pokemon.dex || (isMega(pool[i]) && isMega(pool[j]))) continue;
           consider([picks[0], pool[i], pool[j]]);
         }
       }
@@ -657,6 +667,7 @@
         if (pool[i].pokemon.dex === pool[j].pokemon.dex) continue;
         for (var k = j + 1; k < pool.length; k++) {
           if (pool[k].pokemon.dex === pool[i].pokemon.dex || pool[k].pokemon.dex === pool[j].pokemon.dex) continue;
+          if ((isMega(pool[i]) ? 1 : 0) + (isMega(pool[j]) ? 1 : 0) + (isMega(pool[k]) ? 1 : 0) > 1) continue;
           var members = [pool[i], pool[j], pool[k]];
           var ordered = assignRoles(members, style);
           if (ordered) teams.push({ members: ordered, score: scoreTeam(ctx, members) });
@@ -703,6 +714,29 @@
         rating: rows[bestIdx][i], answer: team.members[bestIdx].pokemon.name
       };
     });
+    // Facts for "How to play it", from the same 1-1 shield matchups against the top REPORT_THREATS.
+    // Members are in role order: [lead, swap, closer]. Win above 550, loss below 450.
+    var top = ctx.threats.slice(0, REPORT_THREATS);
+    var pilot = {
+      leadWins: top.filter(function (t, i) { return rows[0][i] > 550; }).length,
+      // Threats the lead loses and the safe swap wins: the leads to switch away from early.
+      switchFrom: top.map(function (t, i) { return { i: i, t: t }; }).filter(function (x) {
+        return rows[0][x.i] < 450 && rows[1][x.i] > 550;
+      }).slice(0, 3).map(function (x) { return { id: x.t.entry.id, name: x.t.entry.pokemon.name }; }),
+      // Threats only the closer wins: why it is kept for last.
+      closerOnly: top.map(function (t, i) { return { i: i, t: t }; }).filter(function (x) {
+        return rows[2][x.i] > 550 && rows[0][x.i] <= 500 && rows[1][x.i] <= 500;
+      }).slice(0, 3).map(function (x) { return { id: x.t.entry.id, name: x.t.entry.pokemon.name }; }),
+      // Fast moves needed to reach each member's cheapest charged move from zero energy.
+      counts: team.members.map(function (e) {
+        var ids = teamMoveset(ctx, e), fast = gm.movesById[ids[0]];
+        var charged = ids.slice(1).map(function (id) { return gm.movesById[id]; }).filter(Boolean)
+          .sort(function (a, b) { return a.energy - b.energy; })[0];
+        if (!fast || !charged || !fast.energyGain) return null;
+        return { fast: fast.name, charged: charged.name, count: Math.ceil(charged.energy / fast.energyGain) };
+      })
+    };
+
     var strengths = report.slice().sort(function (x, y) { return y.rating - x.rating; }).slice(0, 3);
     var weaknesses = report.slice().sort(function (x, y) { return x.rating - y.rating; }).slice(0, 3);
 
@@ -716,6 +750,7 @@
       members: members,
       // The top REPORT_THREATS of the meta in rank order, each with the team's best answer to it.
       meta: report,
+      pilot: pilot,
       strengths: strengths,
       weaknesses: weaknesses,
       sharedWeaknesses: sharedWeaknesses(team.members.map(function (e) { return e.pokemon; }))

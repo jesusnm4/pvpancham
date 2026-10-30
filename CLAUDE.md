@@ -47,9 +47,12 @@ milestones live in `PLAN.md`.
   the user's own Chrome, at desktop and 390px widths, light and dark, over http and `file://`,
   with no console errors.
 - State lives in two places: `localStorage` (`pvphelper-state-v1` for the view,
-  `pvphelper-ivs-v1` for IVs the viewer typed, per species) and the URL hash
-  (`#l=&s=&p=&t=&e=`, see `hashFor`/`readHash` in `app.js`; `e=0` means "Use Elite moves" is off,
-  `noElite` in state). A hash on load wins over saved state. Engine contexts are cached per
+  `pvphelper-ivs-v1` for IVs the viewer typed, per species, `pvphelper-saved-v1` for saved teams,
+  each re-validated by `loadSaved`) and the URL hash (`#l=&s=&p=&t=&e=&c=`, see
+  `hashFor`/`readHash` in `app.js`; `e=0` means "Use Elite moves" is off, `noElite` in state;
+  `c` is the 1-based team compared with the selected one, `compare` in state, cleared whenever
+  the selection resets). `pilotHidden` (whether "How to play it" is closed) is saved locally only,
+  via `saveLocal()`: the `<details>` toggle event can fire late, so it must never touch the URL. A saved team stores its view's hash and reopens through `hashchange`. A hash on load wins over saved state. Engine contexts are cached per
   league and Elite TM setting (`contextKey`).
   Any new persisted field goes through `applySaved` validation. Team style values are `abc`,
   `pair`, `any`; retired values (`abb`, `aba`) are mapped in `STYLE_ALIASES` so old links work.
@@ -63,8 +66,11 @@ milestones live in `PLAN.md`.
   PvPoke. The refresh warns about scheduled leagues missing from the table, and about a schedule
   that is running out. Engine functions take a league id or a CP cap; the app passes the cap.
 - Megas are ordinary Pokémon in PvPoke's data (`charizard_mega_y`, tag `mega`), sharing the base
-  form's Pokédex number, so the one-per-species rule already covers them; the game has no
-  per-team Mega limit. Follow PvPoke for their rules: a Mega's "+" charged move (`isMegaMove`) gets
+  form's Pokédex number, so the one-per-species rule already covers them. A trainer can have only
+  one Mega-Evolved Pokémon at a time, so a team holds at most one Mega or Primal (Primals are
+  tagged `mega` too): `isMega` in `engine.js`, enforced in `candidates`, `suggest` (two Mega picks
+  are refused with a message) and `bestTeams`. Neither the game master's league rules nor PvPoke's
+  data encode this limit; it is the game's general Mega rule. Follow PvPoke for their rules: a Mega's "+" charged move (`isMegaMove`) gets
   `MEGA_BONUS` by Mega level (3, or 4 with tag `supermega`), and supermegas reach level 52. The
   open-league rankings contain no Megas; GBL leagues with `allowTempEvos` are the Mega formats.
 - Wrap all `localStorage` access in try/catch, and re-validate persisted fields in `load()`.

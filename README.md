@@ -27,7 +27,7 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
 | 10. Megas | ✅ done |
 | 11. Use Elite moves option | ✅ done |
 | 12. Design, phone first | ✅ done |
-| 13. Piloting advice | planned |
+| 13. Piloting advice | ✅ done |
 
 ## Features
 
@@ -35,7 +35,8 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   schedule**, read from the game's own data: a cup appears a week before it starts, is tagged
   **Live** while it runs and disappears when it ends. A note lists what's on in GBL this week
 - **Mega formats** (e.g. Great League (Megas), Mega Halloween Cup): Megas and Primals with their
-  Mega stats, and the "+" Mega move some of them get as a third charged move, marked **Mega**
+  Mega stats, at most one per team (you can only have one Mega-Evolved Pokémon at a time), and
+  the "+" Mega move some of them get as a third charged move, marked **Mega**
 - Team styles: ABC (balanced, no shared types), Shared type (two members share a type, as ABB or
   ABA), or Best score (no typing rule); each suggested team is tagged with its layout
 - Formats grouped as **Live** this week, **Always** (the open leagues) and **Coming up**; on a
@@ -51,19 +52,25 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   PvPoke), recommended fast and charged moves (Elite TM moves marked), rank-1 IVs with level and CP
 - Per team: how many of the league's top 100 it has a winning answer to; **Against the top 30**,
   a grid of the league's top 30 Pokémon tinted win / toss-up / loss by the team's best matchup
-  (tap one to see which member answers it); its 3 closest matchups; and any type that hits two
-  members super-effectively
+  (tap one to see which member answers it); its 3 closest matchups; and each attack type that
+  hits two or more members super-effectively, with which ones
 - The page takes the league's colour: blue for Great, gold for Ultra, purple for Master
 - Each team member says what its role means (lead starts the battle, safe swap comes in when
   the lead is losing, closer finishes)
+- **How to play it** (collapsible, remembered): short advice for each team: who to lead with, which opposing leads to
+  switch away from, what the closer is kept for, fast moves to the first charged move, and types
+  to watch out for, all from simulated battles against the top 30
 - **Compare with** another suggested team: score, winning answers to the top 100, the top-30
-  wins / toss-ups / losses, and the top-30 Pokémon one team handles better than the other
+  wins / toss-ups / losses, and the top-30 Pokémon one team handles better than the other (kept
+  in the link)
+- **Save team** keeps teams you like on this device under "Your saved teams"; tap one to reopen it
 - **Check your IVs** on any team member: your spread's rank among all IV combinations, its stat
   product as a % of rank 1, and the level and CP it reaches under the cap
 - **Use Elite moves** (on by default): turn it off and your team uses each Pokémon's next best moves
   on PvPoke instead of moves that need an Elite TM or a Community Day (the card notes what was
   replaced); opponents keep their usual moves
-- **Copy link** shares the exact view (league, style, picks, selected team, Elite TM setting), e.g.
+- **Copy link** shares the exact view (league, style, picks, selected team, Elite TM setting,
+  comparison), e.g.
   `…/PokemonGoPvpHelper/#l=great&s=abc&p=medicham&t=2`
 - Pokémon GO icons for every ranked Pokémon (correct regional and other forms; shadows glow purple)
 - Remembers your league, style, picks and entered IVs; light and dark theme; works on phones

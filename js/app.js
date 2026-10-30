@@ -1,7 +1,9 @@
 // Owns state, form wiring and rendering. Team math lives in js/engine.js, data loading in js/data.js.
 (function () {
   var KEY = 'pvphelper-state-v1';
-  var IV_KEY = 'pvphelper-ivs-v1';   // { speciesId: [atk, def, hp] } the viewer entered
+  var IV_KEY = 'pvphelper-ivs-v1';
+  var SAVED_KEY = 'pvphelper-saved-v1';   // teams the viewer saved: [{ hash, league, noElite, ids, names, score }]
+  var MAX_SAVED = 12;   // { speciesId: [atk, def, hp] } the viewer entered
   // Formats on offer (data/formats.js, from the GO Battle League schedule): the open leagues always,
   // plus cups that are live now or start within UPCOMING_DAYS, by the viewer's clock.
   var UPCOMING_DAYS = 7;
@@ -53,14 +55,14 @@
   var described = [];  // Engine.describeTeam() of each, for the detail view
   var runId = 0;       // ignores results from a superseded search
   var revealResults = false;  // set by a user pick: scroll new results into view if off-screen
-  var compareWith = null;     // index of a suggested team to compare the selected one with (not saved)
   var TOP_COUNT = 3;
   var topTeams = {};   // contextKey -> Engine.bestTeams() for the banner (best score, no typing rule)
   var topRunId = 0;    // ignores a banner search for a league the viewer already left
   var openThird = null;  // a banner team being opened: select the result that has this third member
 
   // ---- Persistence: localStorage remembers the last view; the URL hash makes it shareable ----
-  // Hash format: #l=great&s=abc&p=medicham,azumarill&t=2 (t is the 1-based selected team).
+  // Hash format: #l=great&s=abc&p=medicham,azumarill&t=2&c=3 (t is the 1-based selected team, c the
+  // 1-based team it is compared with).
 
   // Copies the recognised fields of `saved` onto `s`. Pick ids are only checked for shape here;
   // whether they are ranked in the league is checked once rankings load (see validatePicks).
@@ -77,6 +79,12 @@
     }
     if (typeof saved.selected === 'number' && saved.selected >= 0 && saved.selected < 5) s.selected = Math.floor(saved.selected);
     if (typeof saved.noElite === 'boolean') s.noElite = saved.noElite;
+    if (typeof saved.pilotHidden === 'boolean') s.pilotHidden = saved.pilotHidden;
+    // The team compared with the selected one (0-based), or null; only set when the source has the field.
+    if ('compare' in saved) {
+      s.compare = typeof saved.compare === 'number' && saved.compare >= 0 && saved.compare < 5 && saved.compare === Math.floor(saved.compare)
+        ? saved.compare : null;
+    }
     return s;
   }
 
@@ -88,7 +96,8 @@
       style: params.get('s'),
       picks: (params.get('p') || '').split(',').filter(Boolean),
       selected: Number(params.get('t')) - 1,
-      noElite: params.get('e') === '0'
+      noElite: params.get('e') === '0',
+      compare: params.get('c') ? Number(params.get('c')) - 1 : null
     };
   }
 
@@ -96,28 +105,34 @@
     var picks = st.picks.filter(Boolean);
     if (!picks.length) return '';
     return '#l=' + st.league + '&s=' + st.style + '&p=' + picks.map(encodeURIComponent).join(',') +
-      (st.selected ? '&t=' + (st.selected + 1) : '') + (st.noElite ? '&e=0' : '');
+      (st.selected ? '&t=' + (st.selected + 1) : '') + (st.noElite ? '&e=0' : '') +
+      (st.compare !== null && st.compare !== undefined ? '&c=' + (st.compare + 1) : '');
   }
 
   function load() {
-    var s = { league: 'great', style: 'abc', picks: [null, null], selected: 0, noElite: false };
+    var s = { league: 'great', style: 'abc', picks: [null, null], selected: 0, noElite: false, compare: null, pilotHidden: false };
     try {
       applySaved(s, JSON.parse(localStorage.getItem(KEY) || '{}'));
     } catch (e) { /* private mode or bad JSON: keep defaults */ }
     var shared = readHash();
     // A shared link replaces the remembered view entirely, including empty slots.
-    if (shared) applySaved(s, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected, noElite: shared.noElite });
+    if (shared) applySaved(s, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected, noElite: shared.noElite, compare: shared.compare });
     if (shared && shared.league && LEAGUES.indexOf(shared.league) === -1) {
       startNotice = 'That link is for a cup that is no longer in GO Battle League, so it opened in ' + LEAGUE_NAMES[s.league] + '.';
     }
     return s;
   }
 
-  function save() {
+  // The view in localStorage only; save() also updates the link.
+  function saveLocal() {
     try {
       localStorage.setItem(KEY, JSON.stringify({ league: state.league, style: state.style, picks: state.picks, selected: state.selected,
-        noElite: state.noElite }));
+        noElite: state.noElite, compare: state.compare, pilotHidden: state.pilotHidden }));
     } catch (e) { /* private mode */ }
+  }
+
+  function save() {
+    saveLocal();
     var hash = hashFor(state);
     if (hash !== location.hash) {
       history.replaceState(null, '', hash || location.pathname + location.search);
@@ -334,6 +349,7 @@
     // Keep the filled slot first, so "one pick" always means slot 0.
     if (!state.picks[0] && state.picks[1]) state.picks = [state.picks[1], null];
     state.selected = 0;
+    state.compare = null;
     save();
     syncCombos();
     renderQuickPicks();
@@ -442,7 +458,8 @@
   }
 
   function renderTeams(ctx, notice) {
-    compareWith = null;
+    // A link or saved view can name a comparison that no longer fits the results.
+    if (state.compare !== null && (state.compare >= teams.length || state.compare === state.selected)) { state.compare = null; save(); }
     described = teams.map(function (t) { return window.Engine.describeTeam(ctx, t); });
     var picks = currentPicks();
     var heading = picks.length === 1 ? 'Best partners for ' + escapeHtml(ctx.byId[picks[0]].pokemon.name)
@@ -536,11 +553,12 @@
     }
 
     var shared = d.sharedWeaknesses.length
-      ? '<p class="hint">Types that hit two or more of your Pokémon super-effectively.</p><p class="shared">' +
-        d.sharedWeaknesses.map(function (w) {
-          return typeChips([w.type]) + ' <small>hits ' + w.count + '</small>';
-        }).join(' ') + '</p>'
-      : '<p class="shared">No type hits two members super-effectively.</p>';
+      ? '<p class="hint">Attack types that hit two or more of your Pokémon super-effectively, and which ones.</p>' +
+        '<ul class="shared">' + d.sharedWeaknesses.map(function (w) {
+          return '<li>' + typeChips([w.type]) + ' <span>' + englishList((w.names || []).map(escapeHtml)) +
+            (w.count === 3 ? ' <small>(all three)</small>' : '') + '</span></li>';
+        }).join('') + '</ul>'
+      : '<p class="shared">No attack type hits two of your Pokémon super-effectively.</p>';
 
     var layoutNote = LAYOUT_NOTES[d.layout] ? 'Layout <strong>' + d.layout + '</strong>: ' + LAYOUT_NOTES[d.layout] + '.' : '';
     return '<div class="team-head">' +
@@ -548,9 +566,11 @@
       '<div><h3>' + d.members.map(function (m) { return escapeHtml(m.name); }).join(' · ') + '</h3>' +
       '<p class="coverage">Has a winning answer to <strong>' + d.beats + ' of the top ' + d.threatCount +
       '</strong> Pokémon in ' + LEAGUE_NAMES[state.league] + '.</p>' +
-      (layoutNote ? '<p class="hint">' + layoutNote + '</p>' : '') + compareControl() + '</div></div>' +
+      (layoutNote ? '<p class="hint">' + layoutNote + '</p>' : '') +
+      '<div class="team-actions">' + saveButton(d) + compareControl() + '</div></div></div>' +
       compareBlock(d) +
       metaGrid(d.meta) +
+      pilotNotes(d) +
       '<div class="members">' + members + '</div>' +
       // The grid above shows every top-30 matchup; this names the three closest, which decide games.
       '<div class="report">' +
@@ -558,6 +578,148 @@
       threatList(d.weaknesses) + '</section>' +
       '<section><h3>Shared weaknesses</h3>' + shared + '</section>' +
       '</div>';
+  }
+
+  // ---- How to play it: plain advice built from describeTeam().pilot (simulated matchups) ----
+
+  // "a", "a and b", "a, b and c" (or "or" in place of "and").
+  function englishList(items, word) {
+    word = word || 'and';
+    return items.length < 2 ? items.join('') : items.slice(0, -1).join(', ') + ' ' + word + ' ' + items[items.length - 1];
+  }
+
+  function nameList(items, word) {
+    return englishList(items.map(function (t) { return escapeHtml(t.name); }), word || 'or');
+  }
+
+  function pilotNotes(d) {
+    var p = d.pilot;
+    if (!p) return '';   // a cached engine.js from before this feature
+    var lead = d.members[0], swap = d.members[1], closer = d.members[2];
+    var notes = [];
+    notes.push('Lead with <strong>' + escapeHtml(lead.name) + '</strong>. On its own it wins ' + p.leadWins + ' of the top 30.');
+    notes.push(p.switchFrom.length
+      ? 'If they lead with ' + nameList(p.switchFrom) + ', switch to <strong>' + escapeHtml(swap.name) +
+        '</strong> early: your lead loses ' + (p.switchFrom.length === 1 ? 'that one' : 'those') + ' and ' + escapeHtml(swap.name) + ' wins.'
+      : 'Switch to <strong>' + escapeHtml(swap.name) + '</strong> when your lead is losing a matchup.');
+    notes.push(p.closerOnly.length
+      ? 'Keep <strong>' + escapeHtml(closer.name) + '</strong> for last: it’s your only win against ' +
+        nameList(p.closerOnly, 'and') + '.'
+      : 'Keep <strong>' + escapeHtml(closer.name) + '</strong> for last to finish the battle.');
+    var counts = p.counts.map(function (c, k) {
+      return c ? escapeHtml(d.members[k].name) + ': ' + escapeHtml(c.charged) + ' after ' + c.count + ' fast moves (' + escapeHtml(c.fast) + ')' : '';
+    }).filter(Boolean);
+    if (counts.length) notes.push('Count fast moves to know when your first charged move is ready: ' + counts.join('; ') + '.');
+    // One line per shared weakness, naming the Pokémon it hits; at most two, worst first.
+    d.sharedWeaknesses.slice(0, 2).forEach(function (w) {
+      notes.push('Careful with ' + capitalize(w.type) + ' attacks: they hit ' + englishList((w.names || []).map(escapeHtml)) +
+        ' super-effectively.');
+    });
+    // Open unless the viewer closed it; the choice is remembered (state.pilotHidden).
+    return '<details class="pilot"' + (state.pilotHidden ? '' : ' open') + '><summary><h3>How to play it</h3></summary>' +
+      '<ol>' + notes.map(function (n) { return '<li>' + n + '</li>'; }).join('') + '</ol>' +
+      '<p class="hint">From simulated battles with one shield each, against the top 30 in ' + escapeHtml(LEAGUE_NAMES[state.league]) + '.</p></details>';
+  }
+
+  // "toggle" doesn't bubble, so listen in the capture phase. Chrome also fires it when an open
+  // <details> is first drawn, possibly after the link has moved on, so only a real change is
+  // stored, and only locally: touching the URL here could put back a link the viewer just left.
+  resultsEl().addEventListener('toggle', function (ev) {
+    if (!ev.target.classList || !ev.target.classList.contains('pilot')) return;
+    if (state.pilotHidden === !ev.target.open) return;
+    state.pilotHidden = !ev.target.open;
+    saveLocal();
+  }, true);
+
+  // ---- Saved teams: kept on this device, reopened through their link ----
+
+  function loadSaved() {
+    try {
+      var list = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]');
+      if (!Array.isArray(list)) return [];
+      // Keep only well-formed entries; anything else is dropped rather than trusted.
+      return list.filter(function (t) {
+        return t && typeof t.hash === 'string' && /^#l=/.test(t.hash) && typeof t.league === 'string' &&
+          Array.isArray(t.ids) && t.ids.length === 3 && t.ids.every(function (id) { return typeof id === 'string' && PICK_ID.test(id); }) &&
+          Array.isArray(t.names) && t.names.length === 3 && t.names.every(function (n) { return typeof n === 'string'; }) &&
+          typeof t.score === 'number' && typeof t.noElite === 'boolean';
+      }).slice(0, MAX_SAVED);
+    } catch (e) { return []; }
+  }
+
+  function storeSaved(list) {
+    try { localStorage.setItem(SAVED_KEY, JSON.stringify(list)); } catch (e) { /* private mode */ }
+  }
+
+  // The same three Pokémon in the same format and Elite setting count as one saved team.
+  function savedKey(league, noElite, ids) { return league + (noElite ? ':noelite' : '') + ':' + ids.slice().sort().join(','); }
+
+  function savedIndex(d) {
+    var key = savedKey(state.league, state.noElite, d.members.map(function (m) { return m.id; }));
+    var list = loadSaved();
+    for (var i = 0; i < list.length; i++) if (savedKey(list[i].league, list[i].noElite, list[i].ids) === key) return i;
+    return -1;
+  }
+
+  function saveButton(d) {
+    var saved = savedIndex(d) !== -1;
+    return '<button type="button" class="chip" data-action="save-team" aria-pressed="' + saved + '">' +
+      (saved ? 'Saved' : 'Save team') + '</button>';
+  }
+
+  function toggleSaved(d) {
+    var list = loadSaved(), i = savedIndex(d);
+    if (i !== -1) list.splice(i, 1);
+    else {
+      // The link reopens this exact view: the picks, the style, and this team selected.
+      list.unshift({ hash: hashFor(Object.assign({}, state, { compare: null })), league: state.league, noElite: state.noElite,
+        ids: d.members.map(function (m) { return m.id; }), names: d.members.map(function (m) { return m.name; }), score: d.displayScore });
+    }
+    storeSaved(list.slice(0, MAX_SAVED));
+    renderSaved();
+  }
+
+  function renderSaved() {
+    var list = loadSaved();
+    var panel = document.getElementById('saved-teams');
+    panel.hidden = !list.length;
+    document.getElementById('saved-list').innerHTML = list.map(function (t, i) {
+      var live = LEAGUES.indexOf(t.league) !== -1;
+      var where = live ? escapeHtml(LEAGUE_NAMES[t.league]) + (t.noElite ? ', without Elite moves' : '')
+        : 'A cup that is no longer in GO Battle League';
+      return '<li class="saved' + (live ? '' : ' ended') + '">' +
+        (live ? '<button type="button" class="saved-open" data-saved="' + i + '">' : '<div class="saved-open">') +
+        '<span class="team-icons">' + t.ids.map(function (id) { return icon(id, 32); }).join('') + '</span>' +
+        '<span class="saved-text"><span class="team-names">' + t.names.map(escapeHtml).join(' · ') + '</span>' +
+        '<small>' + where + '</small></span>' +
+        '<span class="team-score" title="Team score out of 100 when saved">' + t.score + '</span>' +
+        (live ? '</button>' : '</div>') +
+        '<button type="button" class="saved-remove" data-remove="' + i + '" aria-label="Remove ' + escapeHtml(t.names.join(', ')) + '">Remove</button></li>';
+    }).join('');
+  }
+
+  document.getElementById('saved-list').addEventListener('click', function (ev) {
+    var list = loadSaved();
+    var remove = ev.target.closest('button[data-remove]');
+    if (remove) {
+      list.splice(Number(remove.dataset.remove), 1);
+      storeSaved(list);
+      renderSaved();
+      refreshSaveButton();   // the open team may be the one just removed
+      return;
+    }
+    var open = ev.target.closest('button[data-saved]');
+    var t = open && list[Number(open.dataset.saved)];
+    if (!t) return;
+    revealResults = true;
+    if (location.hash === t.hash) resultsEl().scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else location.hash = t.hash;   // the hashchange handler opens it, as for a pasted link
+  });
+
+  function refreshSaveButton() {
+    var btn = resultsEl().querySelector('[data-action="save-team"]');
+    var d = described[state.selected];
+    if (btn && d) btn.outerHTML = saveButton(d);
   }
 
   // ---- Compare the selected team with another suggestion ----
@@ -570,7 +732,7 @@
     if (described.length < 2) return '';
     var options = described.map(function (d, i) {
       if (i === state.selected) return '';
-      return '<option value="' + i + '"' + (i === compareWith ? ' selected' : '') + '>' + escapeHtml(teamLabel(i)) + ' (' + d.displayScore + ')</option>';
+      return '<option value="' + i + '"' + (i === state.compare ? ' selected' : '') + '>' + escapeHtml(teamLabel(i)) + ' (' + d.displayScore + ')</option>';
     }).join('');
     return '<label class="compare">Compare with <select data-action="compare"><option value="">another team…</option>' + options + '</select></label>';
   }
@@ -584,7 +746,7 @@
   // Side by side: score, answers to the top 100, the top-30 tally, then the top-30 threats where
   // the two teams land in different bands (win / toss-up / loss).
   function compareBlock(d) {
-    var o = compareWith === null ? null : described[compareWith];
+    var o = state.compare === null ? null : described[state.compare];
     if (!o || !d.meta || !o.meta) return '';
     var a = tallyOf(d.meta), b = tallyOf(o.meta);
     var rank = { loss: 0, even: 1, win: 2 };
@@ -598,7 +760,7 @@
     function row(label, x, y) {
       return '<tr><th scope="row">' + label + '</th><td>' + x + '</td><td>' + y + '</td></tr>';
     }
-    var me = '#' + (state.selected + 1), them = '#' + (compareWith + 1);
+    var me = '#' + (state.selected + 1), them = '#' + (state.compare + 1);
     function diffList(title, items) {
       if (!items.length) return '';
       return '<div><h4>' + title + '</h4><ul class="diff-list">' + items.map(function (it) {
@@ -606,8 +768,8 @@
           me + ': ' + BAND_NAMES[it.mine] + ' · ' + them + ': ' + BAND_NAMES[it.theirs] + '</small></span></li>';
       }).join('') + '</ul></div>';
     }
-    var mineLabel = '#' + (state.selected + 1) + '<br><small>this team</small>', theirLabel = '#' + (compareWith + 1);
-    return '<section class="comparison" aria-label="Comparison with team ' + (compareWith + 1) + '">' +
+    var mineLabel = '#' + (state.selected + 1) + '<br><small>this team</small>', theirLabel = '#' + (state.compare + 1);
+    return '<section class="comparison" aria-label="Comparison with team ' + (state.compare + 1) + '">' +
       '<table><thead><tr><td></td><th scope="col">' + mineLabel + '</th><th scope="col">' + theirLabel + '</th></tr></thead><tbody>' +
       row('Team score', d.displayScore, o.displayScore) +
       row('Winning answers, top ' + d.threatCount, d.beats, o.beats) +
@@ -623,7 +785,8 @@
   resultsEl().addEventListener('change', function (ev) {
     var select = ev.target.closest('select[data-action="compare"]');
     if (!select) return;
-    compareWith = select.value === '' ? null : Number(select.value);
+    state.compare = select.value === '' ? null : Number(select.value);
+    save();
     document.getElementById('team-detail').innerHTML = renderDetail(described[state.selected]);
     var again = resultsEl().querySelector('select[data-action="compare"]');
     if (again) again.focus();
@@ -673,6 +836,13 @@
   resultsEl().addEventListener('click', function (ev) {
     var share = ev.target.closest('button[data-action="share"]');
     if (share) { copyLink(share); return; }
+    if (ev.target.closest('button[data-action="save-team"]') && described[state.selected]) {
+      toggleSaved(described[state.selected]);
+      refreshSaveButton();
+      var again = resultsEl().querySelector('[data-action="save-team"]');
+      if (again) again.focus();
+      return;
+    }
     var cell = ev.target.closest('button[data-meta]');
     var d = described[state.selected];
     if (cell && d && d.meta) {
@@ -686,7 +856,7 @@
     var btn = ev.target.closest('button[data-team]');
     if (!btn || !described[Number(btn.dataset.team)]) return;
     state.selected = Number(btn.dataset.team);
-    if (compareWith === state.selected) compareWith = null;
+    if (state.compare === state.selected) state.compare = null;
     save();
     Array.prototype.forEach.call(resultsEl().querySelectorAll('.team-option'), function (b) {
       b.setAttribute('aria-pressed', String(b === btn));
@@ -757,6 +927,7 @@
     if (!window.Engine.assignRoles(team.members, state.style)) state.style = 'any';
     state.picks = [team.members[0].id, team.members[1].id];
     state.selected = 0;
+    state.compare = null;
     openThird = team.members[2].id;
     save();
     syncRadios();
@@ -865,7 +1036,7 @@
   window.addEventListener('hashchange', function () {
     var shared = readHash();
     if (!shared || location.hash === hashFor(state)) return;
-    applySaved(state, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected, noElite: shared.noElite });
+    applySaved(state, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected, noElite: shared.noElite, compare: shared.compare });
     save();
     syncRadios();
     revealLeague();
@@ -884,6 +1055,7 @@
         if (!input.checked) return;
         state[field] = input.value;
         state.selected = 0;
+        state.compare = null;
         save();
         if (onChange) onChange();
       });
@@ -902,6 +1074,7 @@
   useElite.addEventListener('change', function () {
     state.noElite = !useElite.checked;
     state.selected = 0;
+    state.compare = null;
     save();
     runSearch();
     renderTopTeams();
@@ -920,4 +1093,6 @@
   }
   runSearch(startNotice);
   renderTopTeams();
+  // Saved teams show their icons, so wait for the image map.
+  window.PvpData.images().then(function (map) { images = map; renderSaved(); }, function () { renderSaved(); });
 })();

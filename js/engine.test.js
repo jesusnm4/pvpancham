@@ -224,7 +224,13 @@
   test('shared weaknesses', function () {
     var list = [mon('a', ['steel'], [1, 1, 1]), mon('b', ['steel', 'ice'], [1, 1, 1]), mon('c', ['rock'], [1, 1, 1])];
     var shared = E.sharedWeaknesses(list);
-    eq('fighting hits all three', shared[0], { type: 'fighting', count: 3 });
+    eq('fighting hits all three', shared[0], { type: 'fighting', count: 3, names: list.map(function (p) { return p.name; }) });
+    ok('each type names exactly the Pokémon it hits', shared.every(function (s) {
+      return s.names.length === s.count && s.names.every(function (n) {
+        var p = list.filter(function (x) { return x.name === n; })[0];
+        return p && E.isSuperEffective(s.type, p.types);
+      });
+    }));
     eq('types hitting two or more', shared.map(function (s) { return s.type; }).sort(),
       ['fighting', 'fire', 'ground', 'steel', 'water'].filter(function (t) {
         return list.filter(function (p) { return E.isSuperEffective(t, p.types); }).length >= 2;
@@ -286,6 +292,20 @@
       ok(league + ': shared-type teams are ABB or ABA', paired.length > 0 && paired.every(function (t) {
         return ['ABB', 'ABA'].indexOf(E.describeTeam(ctx, t).layout) !== -1;
       }), paired.map(function (t) { return E.layoutOf(t.members); }).join(' '));
+      if (f.megas) {
+        var megaCount = function (t) { return t.members.filter(function (m) { return m.pokemon.tags && m.pokemon.tags.indexOf('mega') !== -1; }).length; };
+        var megas = ctx.ranked.filter(function (e) { return e.pokemon.tags && e.pokemon.tags.indexOf('mega') !== -1; });
+        ok(league + ': at most one Mega per suggested team, picked or not',
+          megas.length < 2 || E.suggest(ctx, [megas[0].id], 'any', 5).concat(E.suggest(ctx, [ctx.ranked[0].id], 'any', 5))
+            .every(function (t) { return megaCount(t) <= 1; }));
+        ok(league + ': at most one Mega in the top teams', E.bestTeams(ctx, 'any', 3).every(function (t) { return megaCount(t) <= 1; }));
+        var twoMegas = megas.filter(function (e) { return e.pokemon.dex !== (megas[0] && megas[0].pokemon.dex); })[0];
+        if (megas.length && twoMegas) {
+          var threw = false;
+          try { E.suggest(ctx, [megas[0].id, twoMegas.id], 'any', 5); } catch (err) { threw = /only one Mega/.test(err.message); }
+          ok(league + ': two Mega picks are refused', threw);
+        }
+      }
       ok(league + ': best first', teams.every(function (t, i) { return i === 0 || teams[i - 1].score >= t.score; }));
 
       var two = E.suggest(ctx, [teams[0].members[0].id, teams[0].members[1].id], 'any', 3);
@@ -309,6 +329,21 @@
           return t.id === ctx.threats[i].entry.id && t.rating === best &&
             d.members.some(function (m) { return m.name === t.answer; });
         }));
+      var rowsOf = teams[0].members.map(function (m) { return ctx.rows[m.id]; });
+      ok(league + ': pilot leadWins counts the lead\'s own top-30 wins',
+        d.pilot.leadWins === rowsOf[0].slice(0, 30).filter(function (r) { return r > 550; }).length);
+      ok(league + ': pilot switchFrom are leads the lead loses and the swap wins', d.pilot.switchFrom.every(function (t) {
+        var i = ctx.threats.findIndex(function (x) { return x.entry.id === t.id; });
+        return i >= 0 && i < 30 && rowsOf[0][i] < 450 && rowsOf[1][i] > 550;
+      }) && d.pilot.switchFrom.length <= 3);
+      ok(league + ': pilot closerOnly are threats only the closer wins', d.pilot.closerOnly.every(function (t) {
+        var i = ctx.threats.findIndex(function (x) { return x.entry.id === t.id; });
+        return i >= 0 && i < 30 && rowsOf[2][i] > 550 && rowsOf[0][i] <= 500 && rowsOf[1][i] <= 500;
+      }));
+      ok(league + ': pilot fast-move counts reach the cheapest charged move', d.pilot.counts.every(function (c, k) {
+        var moves = d.members[k].moves;
+        return c && c.count >= 1 && c.fast === moves[0].name && moves.slice(1).some(function (m) { return m.name === c.charged; });
+      }));
       ok(league + ': display score is 0-100', d.displayScore >= 0 && d.displayScore <= 100, d.displayScore);
       ok(league + ': beats counts winning answers among the 100 threats', d.threatCount === 100 &&
         d.beats <= 100 && (d.weaknesses[0].rating > 500 || d.beats < 100), d.beats + '/' + d.threatCount);
