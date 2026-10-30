@@ -55,7 +55,9 @@ milestones live in `PLAN.md`.
   via `saveLocal()`: the `<details>` toggle event can fire late, so it must never touch the URL. A saved team stores its view's hash and reopens through `hashchange`. A hash on load wins over saved state. Engine contexts are cached per
   league and Elite TM setting (`contextKey`).
   Picks are up to three slots, kept filled-first by `compactPicks`; three picks are the viewer's
-  own team (`suggest` returns just that team, and the style doesn't apply).
+  own team (`suggest` returns just that team, and the style doesn't apply). The third field shows
+  once two are picked, and each field's list hides the other picks' species and, once one is
+  picked, other Megas. `.impeccable/` (critique snapshots) is git-ignored.
   Any new persisted field goes through `applySaved` validation. Team style values are `abc`,
   `pair`, `any`; retired values (`abb`, `aba`) are mapped in `STYLE_ALIASES` so old links work.
 - Formats come from `data/formats.js`, built by `update_data.py` from the GO Battle League schedule

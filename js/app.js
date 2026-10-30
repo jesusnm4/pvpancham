@@ -255,12 +255,13 @@
       var ctx = contexts[contextKey(state.league)];
       var q = normalize(query);
       if (!ctx || !q) return [];
-      // The other slots' species can't be picked again.
-      var otherDex = state.picks.filter(function (id, i) { return i !== slot && id && ctx.byId[id]; })
-        .map(function (id) { return ctx.byId[id].pokemon.dex; });
+      // The other slots' species can't be picked again, nor a second Mega.
+      var others = state.picks.filter(function (id, i) { return i !== slot && id && ctx.byId[id]; });
+      var otherDex = others.map(function (id) { return ctx.byId[id].pokemon.dex; });
+      var megaTaken = others.some(function (id) { return isMegaId(ctx, id); });
       var starts = [], contains = [];
       ctx.ranked.forEach(function (e) {
-        if (otherDex.indexOf(e.pokemon.dex) !== -1) return;
+        if (otherDex.indexOf(e.pokemon.dex) !== -1 || (megaTaken && isMegaId(ctx, e.id))) return;
         var name = normalize(e.pokemon.name);
         var nick = (e.pokemon.nicknames || []).some(function (n) { return normalize(n).indexOf(q) === 0; });
         if (name.indexOf(q) === 0 || nick) starts.push(e);
@@ -351,11 +352,12 @@
 
   function syncCombos() {
     combos.forEach(function (c) { c.sync(); });
-    // Three picks are a finished team: the team style has nothing to choose.
-    var full = currentPicks().length === 3;
-    var style = document.querySelector('fieldset.style');
-    style.disabled = full;
-    style.title = full ? 'Your three Pokémon are the team, so the team style doesn’t apply' : '';
+    // The third field appears once two are picked; three picks are a finished team, so the team
+    // style has nothing to choose.
+    var count = currentPicks().length;
+    document.querySelector('.combo[data-slot="2"]').hidden = count < 2;
+    document.querySelector('fieldset.style').disabled = count === 3;
+    document.getElementById('style-note').hidden = count !== 3;
   }
 
   function setPick(slot, id) {

@@ -216,7 +216,8 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
    Also: on phones each member card is one line (icon, name, role, moves) that opens on tap.
    Also: an optional **third pick** checks a team the player already has in mind: `suggest` returns
    that team alone (roles assigned, no typing rule), shown as "Your team" with no team list or
-   comparison, and the team style is disabled while three are picked.
+   comparison, and the team style is disabled while three are picked (with a note saying why).
+   The third field appears once two are picked, and the search lists leave out a second Mega.
 14. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
    shielding), and limited-format cups.
 

@@ -158,7 +158,8 @@ h1, h2, h3 { text-wrap: balance; }
 
 /* ---- Pokémon pickers ---- */
 
-.picks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.picks { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 12px; }   /* one column per shown field */
+.combo[hidden] { display: none; }
 
 .combo { position: relative; min-width: 0; }
 .combo label { display: block; font-size: var(--fs-sm); margin-bottom: 4px; }
@@ -213,6 +214,7 @@ h1, h2, h3 { text-wrap: balance; }
 .options fieldset.style { margin: 0; display: flex; align-items: center; gap: 12px; }
 .options fieldset.style:disabled { opacity: 0.5; }
 .options fieldset.style:disabled label { cursor: default; }
+.options .style-note { flex-basis: 100%; margin: -4px 0 0; }
 .options legend { float: left; margin: 0; font-size: var(--fs-sm); color: var(--muted); font-weight: 400; }
 .explain { font-size: var(--fs-sm); color: var(--muted); }
 .explain summary { cursor: pointer; color: var(--accent); min-height: 40px; display: flex; align-items: center; }
@@ -495,7 +497,7 @@ h1, h2, h3 { text-wrap: balance; }
   .options .segmented label { flex: 1; justify-content: center; padding: 6px 8px; }
   .explain dl { grid-template-columns: 1fr; gap: 2px; }
   .explain dd { margin-bottom: 6px; }
-  .picks { grid-template-columns: 1fr; }
+  .picks { grid-auto-flow: row; }
   /* On a phone the team detail is the main reading: body size, not secondary. */
   .member dl, .threats, .ivcheck { font-size: var(--fs-md); }
   .team-head { gap: 12px; }

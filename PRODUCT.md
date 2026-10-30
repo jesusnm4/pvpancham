@@ -26,8 +26,8 @@ and can use in the next set, without needing to be an expert or read a ranking t
 - **Follows the live GBL schedule:** shows only the leagues and cups on now or starting within a
   week, Mega formats included, read from the game's own data.
 - **Plain answers, fast:** a team, its moves and IVs, and why, in plain words.
-- **Simple to use:** no expertise needed, and each team should come with short, concise advice on
-  how to pilot it (not built yet; see below).
+- **Simple to use:** no expertise needed, and each team comes with short, concise advice on how to
+  pilot it ("How to play it").
 - **Shareable exact view:** one link reproduces the league, style, picks, team and settings.
 
 ## Operating Context
@@ -45,8 +45,8 @@ and can use in the next set, without needing to be an expert or read a ranking t
 - Terms used on the page: league, cup, team style (ABC, Shared type ABB/ABA, Best score), roles
   (lead, safe swap, closer), Elite moves, Mega move, IVs, team score out of 100, "answers to the
   top 100".
-- Open decision: how the per-team piloting advice is written and shown (generated from roles,
-  moves and matchups; never invented claims).
+- Piloting advice is generated from roles, moves and simulated matchups against the top 30; never
+  invented claims.
 
 ## Brand Commitments
 
