@@ -48,6 +48,9 @@ OVERRIDES = {
     "zygarde": "FIFTY_PERCENT", "zygarde_10": "TEN_PERCENT",
 }
 
+# Ids whose icons are kept even when no format ranks them: Pancham is the site's logo (index.html).
+ALWAYS = ["pancham"]
+
 
 def load_js(name):
     """Reads one of our generated data/*.js files back into Python."""
@@ -131,7 +134,7 @@ def main():
         previous["sources"] = {}
 
     mapping, used, missing = {}, {}, []
-    for pid in ranked:
+    for pid in sorted(set(ranked) | set(ALWAYS)):
         icon = icon_for(by_id[pid], sources)
         if not icon:
             missing.append("%s (%s)" % (pid, by_id[pid]["name"]))

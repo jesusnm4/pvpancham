@@ -247,6 +247,12 @@ Every choice (league, style, quick pick, type, Live) is a full pill (999px). Ran
 
 ## Components
 
+### Site header
+Pancham's 48px icon (decorative) to the left of the name, "PvPancham" (Headline), with the
+tagline "Pokémon GO PvP team builder" under it in muted 14px; the theme select on the right.
+On phones the select's "Theme" label is visually hidden (kept for screen readers) so the name and
+tagline keep one line each.
+
 ### League and style chips
 Calm and tactile. Pill, 1px Rule border, 6px 14px, at least 40px tall, never wrapping inside.
 Selected: Notebook Blue fill, white text. League chips sit in labelled groups (Live until …,

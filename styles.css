@@ -73,6 +73,9 @@ main,
 }
 
 .site-header h1 { font-size: var(--fs-lg); margin: 0; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand img { flex-shrink: 0; }
+.theme-picker { flex-shrink: 0; white-space: nowrap; }
 .site-header .tagline { margin: 0; color: var(--muted); font-size: var(--fs-sm); }
 
 .theme-picker { color: var(--muted); font-size: var(--fs-sm); }
@@ -482,6 +485,8 @@ h1, h2, h3 { text-wrap: balance; }
 }
 
 @media (max-width: 520px) {
+  /* Room for the name and tagline on one line each; the select still has its label for screen readers. */
+  .theme-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   /* Sideways rows bleed to the panel edges so the cut-off chip shows there is more. */
   .league-row, .quick {
     flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;

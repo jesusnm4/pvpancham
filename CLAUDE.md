@@ -24,6 +24,8 @@ milestones live in `PLAN.md`.
   with `data/images.js` mapping species id → stem. Never hand-edit either. If a ranked Pokémon has
   no icon, add its Pokémon GO form name to `OVERRIDES`; never map a form to another form's icon.
   Images are decorative (`alt=""`, the name is always shown) and the page must work without them.
+  Pancham's icon (`pm674.webp`) is the header logo, so `ALWAYS` in `update_images.py` keeps it
+  even if no format ranks Pancham.
 - `js/data.js` exposes `PvpData.gamemaster()` (pokemon, moves, `pokemonById`, `movesById`) and
   `PvpData.rankings(league)` and `PvpData.images()` as promises. Rankings entries are trimmed: `id`, `score`, `roles`
   (lead, closer, switch, charger, attacker, consistency), `moveset`, `wins`/`losses` as
