@@ -7,6 +7,7 @@
   --border: #d8dde3;
   --accent: #2f6fde;
   --accent-text: #ffffff;
+  --live: #187a42;
 }
 
 :root[data-theme="dark"] {
@@ -18,6 +19,7 @@
   --border: #30353d;
   --accent: #6b9cf0;
   --accent-text: #0d1014;
+  --live: #5cc98d;
 }
 
 * { box-sizing: border-box; }
@@ -59,34 +61,46 @@ main,
   margin: 16px 0;
 }
 
-fieldset { border: 0; margin: 0 0 16px; padding: 0; }
+fieldset { border: 0; margin: 0 0 16px; padding: 0; min-width: 0; }  /* fieldsets default to min-content width */
 fieldset:last-child { margin-bottom: 0; }
 legend { font-weight: 600; margin-bottom: 8px; }
 
 .segmented { display: flex; flex-wrap: wrap; gap: 8px; }
 
-.segmented label {
+/* Choice chips: league and team style. The radio is hidden inside its label. */
+.segmented label,
+.league-row label {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 40px;
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 6px 14px;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.segmented input { position: absolute; opacity: 0; pointer-events: none; }
+.segmented input,
+.league-row input { position: absolute; opacity: 0; pointer-events: none; }
 
-.segmented label:has(input:checked) {
+.segmented label:has(input:checked),
+.league-row label:has(input:checked) {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-text);
 }
 
-.segmented label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.segmented label:has(input:focus-visible),
+.league-row label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.segmented small { opacity: 0.75; }
+.league-row small { opacity: 0.75; }
 
-.check { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; cursor: pointer; }
+/* League or cup: groups (live, always, coming up) side by side, wrapping; one sideways row on phones. */
+.league-row { position: relative; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.league-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.group-label { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+.league-group.live .group-label { color: var(--live); }
+
+.check { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; cursor: pointer; }
 .check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
-.check small { flex-basis: 100%; padding-left: 26px; color: var(--muted); font-size: 0.8125rem; }
 .member .swapped { margin-top: 4px; font-size: 0.8125rem; color: var(--muted); }
 
 /* GO Battle League status on a format: live this week, or the date a cup starts. */
@@ -94,9 +108,7 @@ legend { font-weight: 600; margin-bottom: 8px; }
   margin-left: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
   padding: 0 6px; border-radius: 999px; vertical-align: 1px; display: inline-block; white-space: nowrap;
 }
-.status.live { background: #1f8a4c; color: #ffffff; }
 .status.soon { border: 1px solid currentColor; opacity: 0.8; }
-.segmented label:has(input:checked) .status.live { background: var(--accent-text); color: var(--accent); }
 .gbl-week { margin: 10px 0 0; }
 .gbl-week small { font-size: inherit; }
 
@@ -165,6 +177,21 @@ h3 { font-size: 1rem; margin: 0; }
 .opt-meta { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .opt-meta small { color: var(--muted); }
 
+/* ---- Team style and Elite moves: one compact row, explanations behind a disclosure ---- */
+
+.options {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px;
+  border-top: 1px solid var(--border); padding-top: 16px;
+}
+.options fieldset.style { margin: 0; display: flex; align-items: center; gap: 12px; }
+.options legend { float: left; margin: 0; font-size: 0.875rem; color: var(--muted); font-weight: 400; }
+.explain { font-size: 0.875rem; color: var(--muted); }
+.explain summary { cursor: pointer; color: var(--accent); min-height: 40px; display: flex; align-items: center; }
+.explain[open] { flex-basis: 100%; }
+.explain dl { margin: 4px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; }
+.explain dt { font-weight: 600; color: var(--text); }
+.explain dd { margin: 0; }
+
 .quick { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .quick-label { color: var(--muted); font-size: 0.875rem; }
 .chip {
@@ -206,6 +233,7 @@ h3 { font-size: 1rem; margin: 0; }
 
 /* ---- Top teams banner ---- */
 
+.panel[hidden] { display: none; }
 .top-teams { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
 .top-teams .hint { margin-bottom: 10px; }
 .top-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -298,11 +326,31 @@ h3 { font-size: 1rem; margin: 0; }
 }
 
 @media (max-width: 520px) {
+  /* Sideways rows bleed to the panel edges so the cut-off chip shows there is more. */
+  .league-row, .quick {
+    flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+    margin-left: -16px; margin-right: -16px; padding: 2px 16px;
+  }
+  .league-row::-webkit-scrollbar, .quick::-webkit-scrollbar { display: none; }
+  .league-group { flex-wrap: nowrap; flex-shrink: 0; }
+  /* A cup's type list can outgrow the screen; its full rules are in the chip's title. */
+  .league-row small { display: inline-block; max-width: 7.5em; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+  .quick > * { flex-shrink: 0; }
+  .options fieldset.style { flex-basis: 100%; flex-wrap: wrap; gap: 8px; }
+  .options legend { float: none; }
+  .options .segmented { flex-wrap: nowrap; width: 100%; }
+  .options .segmented label { flex: 1; justify-content: center; padding: 6px 8px; }
+  .explain dl { grid-template-columns: 1fr; gap: 2px; }
+  .explain dd { margin-bottom: 6px; }
   .picks { grid-template-columns: 1fr; }
   /* Room for the full name, so e.g. a Pokémon and its shadow form never truncate to the same text. */
   .opt-meta .type { display: none; }
   .opt-name { white-space: normal; overflow: visible; }
   .team-icons .poke { width: 28px; height: 28px; }
+  /* Team rows: rank, icons, layout and score on one line, the names on their own line below. */
+  .team-option { flex-wrap: wrap; row-gap: 4px; }
+  .team-option .layout { margin-left: auto; }
+  .team-option .team-names { order: 1; flex-basis: 100%; }
 }
 
 .site-footer { color: var(--muted); font-size: 0.8125rem; padding-bottom: 24px; }

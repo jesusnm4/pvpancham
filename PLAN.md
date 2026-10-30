@@ -179,7 +179,20 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
    offered like any cup, and PvPoke's Mega rules in the simulator (Mega move bonus, level 52). ✅
 11. **Use Elite moves:** an option (on by default) for players without Elite TMs; turned off, team
    members use PvPoke's next best non-Elite moves, shared in links as `e=0`. ✅
-12. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
+12. **Design, phone first** (product and visual records in `PRODUCT.md` and `DESIGN.md`), in
+   phases, each reviewed before the next:
+   1. *First screen:* leagues grouped as Live / Always / Coming up (one sideways row on phones),
+      Your Pokémon next, team style and Elite moves on one row with explanations behind "What do
+      these mean?". With no picks the top teams are the starting point under the form; with picks
+      they move below the results. Team rows put the names on their own line on phones. ✅
+   2. *Type:* a five-step scale (12/14/16/20/32), tabular figures, and a team header leading with
+      the score and "beats N of the top 100".
+   3. *Meta coverage and accents:* a top-30 threat grid tinted by the team's best matchup,
+      per-league accent colours, contrast fixes.
+   4. *Polish,* then a fresh critique.
+13. **Piloting advice:** a short, plain note per team on how to play it (lead, when to swap, what
+   to save shields for), generated from its roles, moves and matchups. Wording to be decided.
+14. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
    shielding), and limited-format cups.
 
 ## Research: Pokémon images

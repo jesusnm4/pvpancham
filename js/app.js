@@ -362,6 +362,7 @@
   function resultsEl() { return document.getElementById('results'); }
 
   function showMessage(html, cls) {
+    resultsEl().hidden = false;
     resultsEl().innerHTML = '<p class="' + (cls || 'placeholder') + '">' + html + '</p>';
   }
 
@@ -383,8 +384,9 @@
       if (!picks.length) {
         teams = [];
         described = [];
-        showMessage((notice ? escapeHtml(notice) + ' ' : '') +
-          'Pick a Pokémon above to get team suggestions for ' + LEAGUE_NAMES[league] + '.');
+        // Nothing to show yet: the top teams below the form are the starting point.
+        if (notice) showMessage(escapeHtml(notice), 'notice');
+        else { resultsEl().hidden = true; resultsEl().innerHTML = ''; }
         return;
       }
       showMessage('Finding the best teams…');
@@ -431,6 +433,7 @@
         '<span class="team-score" title="Team score out of 100">' + d.displayScore + '</span></button></li>';
     }).join('');
 
+    resultsEl().hidden = false;
     resultsEl().innerHTML =
       (notice ? '<p class="notice">' + escapeHtml(notice) + '</p>' : '') +
       '<div class="results-head"><h2>' + heading + '</h2>' +
@@ -439,11 +442,12 @@
       '. Team score (out of 100) rates how well the team covers the top 100 Pokémon in ' + LEAGUE_NAMES[state.league] + '.</p>' +
       '<ol class="team-list">' + list + '</ol>' +
       '<div id="team-detail">' + renderDetail(described[state.selected]) + '</div>';
-    // On a phone the results start below the fold; after a pick, bring them into view.
+    // On a phone the results start below the fold, and a top team is opened from below them;
+    // after a pick, bring them into view.
     if (revealResults) {
       revealResults = false;
       var top = resultsEl().getBoundingClientRect().top;
-      if (top > window.innerHeight * 0.6) resultsEl().scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (top > window.innerHeight * 0.6 || top < 0) resultsEl().scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
 
@@ -583,8 +587,8 @@
       setTimeout(function () {
         if (id !== topRunId) return;
         if (!topTeams[key]) topTeams[key] = window.Engine.bestTeams(ctx, 'any', TOP_COUNT);
-        hint.textContent = 'Highest-scoring teams of any typing' + (state.noElite ? ' without Elite TM moves' : '') +
-          ', built from the top 50 Pokémon in ' + LEAGUE_NAMES[league] + '. Pick one to see its details.';
+        hint.textContent = 'The highest-scoring teams of any typing' + (state.noElite ? ' without Elite TM moves' : '') +
+          ' from the top 50 Pokémon in ' + LEAGUE_NAMES[league] + '. Open one to see its moves and IVs.';
         list.innerHTML = topTeams[key].map(function (t, i) {
           var d = window.Engine.describeTeam(ctx, t);
           return '<li><button type="button" class="top-team" data-top="' + i + '">' +
@@ -631,27 +635,52 @@
     return new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
 
-  function renderLeagueOptions() {
-    document.getElementById('league-options').innerHTML = FORMATS.map(function (f) {
-      var live = liveWeek(f.weeks);
-      var next = live ? null : f.weeks.filter(function (w) { return w[0] > NOW; })[0];
-      var status = live ? '<span class="status live" title="In GO Battle League until ' + escapeHtml(shortDate(live[1])) + '">Live</span>'
-        : f.cup !== 'all' && next ? '<span class="status soon">From ' + escapeHtml(shortDate(next[0])) + '</span>' : '';
-      return '<label' + (f.rules ? ' title="' + escapeHtml(f.rules) + '"' : '') + '><input type="radio" name="league" value="' +
-        escapeHtml(f.id) + '"> ' + escapeHtml(f.name.replace(/ League\b/, '')) + ' <small>' + escapeHtml(f.label) + '</small>' + status + '</label>';
-    }).join('');
+  function leagueChip(f, status) {
+    return '<label' + (f.rules ? ' title="' + escapeHtml(f.rules) + '"' : '') + '><input type="radio" name="league" value="' +
+      escapeHtml(f.id) + '"> ' + escapeHtml(f.name.replace(/ League\b/, '')) + ' <small>' + escapeHtml(f.label) + '</small>' +
+      (status || '') + '</label>';
+  }
 
-    // What's on in GBL this week, including formats the site can't offer yet.
-    var note = document.getElementById('gbl-week');
-    var on = [], until = null;
-    FORMAT_DATA.formats.concat(FORMAT_DATA.other).forEach(function (f) {
+  // Three groups, in this order: live in GBL this week, always available, and starting within a week.
+  function renderLeagueOptions() {
+    var live = [], always = [], soon = [], until = null;
+    FORMATS.forEach(function (f) {
       var w = liveWeek(f.weeks);
-      if (!w) return;
-      until = w[1];
-      on.push(escapeHtml(f.name) + (f.reason ? ' <small>(no public rankings to build from)</small>' : ''));
+      if (w) { live.push(f); until = w[1]; }
+      else if (f.cup === 'all') always.push(f);
+      else soon.push(f);
     });
-    note.hidden = !on.length;
-    note.innerHTML = on.length ? 'This week in GO Battle League, until ' + escapeHtml(shortDate(until)) + ': ' + on.join(', ') + '.' : '';
+    function group(name, items, chip) {
+      if (!items.length) return '';
+      return '<div class="league-group" role="group" aria-label="' + escapeHtml(name) + '"><span class="group-label">' +
+        escapeHtml(name) + '</span>' + items.map(chip).join('') + '</div>';
+    }
+    document.getElementById('league-options').innerHTML =
+      group(until ? 'Live until ' + shortDate(until) : 'Live', live, function (f) { return leagueChip(f); }, 'live') +
+      group(live.length ? 'Always' : 'Leagues', always, function (f) { return leagueChip(f); }) +
+      group('Coming up', soon, function (f) {
+        var next = f.weeks.filter(function (w) { return w[0] > NOW; })[0];
+        return leagueChip(f, next ? '<span class="status soon">' + escapeHtml(shortDate(next[0])) + '</span>' : '');
+      });
+
+    // Live GBL formats the site can't offer (no PvPoke rankings), so the week's line-up is complete.
+    var note = document.getElementById('gbl-week');
+    var missing = FORMAT_DATA.other.filter(function (f) { return liveWeek(f.weeks); }).map(function (f) { return escapeHtml(f.name); });
+    note.hidden = !missing.length;
+    note.innerHTML = missing.length ? 'Also live in GO Battle League: ' + missing.join(', ') + ' (no public rankings to build from).' : '';
+  }
+
+  // Scrolls the league row (phone: one sideways row) so the selected format is in view.
+  function revealLeague() {
+    var row = document.getElementById('league-options');
+    var chip = row.querySelector('input:checked');
+    if (!chip || row.scrollWidth <= row.clientWidth) return;
+    // Offsets are relative to .league-row (its offsetParent). Stay at the start if the chip shows
+    // there, else start at its group, else at the chip itself.
+    var label = chip.parentNode, right = label.offsetLeft + label.offsetWidth;
+    var groupStart = Math.max(0, label.parentNode.offsetLeft - 16);
+    row.scrollLeft = right <= row.clientWidth ? 0
+      : right - groupStart <= row.clientWidth ? groupStart : Math.max(0, label.offsetLeft - 16);
   }
 
   // ---- Form wiring ----
@@ -688,6 +717,7 @@
     applySaved(state, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected, noElite: shared.noElite });
     save();
     syncRadios();
+    revealLeague();
     syncCombos();
     renderQuickPicks();
     runSearch();
@@ -727,6 +757,7 @@
 
   renderLeagueOptions();
   bindRadios('league', 'league', function () { syncCombos(); renderQuickPicks(); runSearch(); renderTopTeams(); });
+  revealLeague();
   bindRadios('style', 'style', function () { runSearch(); });
   bindTheme();
   renderDataDate();

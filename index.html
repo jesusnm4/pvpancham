@@ -22,36 +22,16 @@
   </header>
 
   <main>
-    <section class="panel top-teams" id="top-teams" aria-labelledby="top-teams-title">
-      <h2 id="top-teams-title">Top teams</h2>
-      <p class="hint" id="top-teams-hint">Ranking teams…</p>
-      <ol class="top-list" id="top-list"></ol>
-    </section>
-
-    <section class="panel">
-      <fieldset>
+    <section class="panel form">
+      <fieldset class="league">
         <legend>League or cup</legend>
-        <!-- Filled from data/formats.js: the open leagues plus cups in the GO Battle League schedule. -->
-        <div class="segmented" id="league-options"></div>
+        <!-- Filled from data/formats.js: the open leagues plus cups in the GO Battle League schedule,
+             grouped as live this week, always on, and coming up. -->
+        <div class="league-row" id="league-options"></div>
         <p class="hint gbl-week" id="gbl-week" hidden></p>
       </fieldset>
 
-      <fieldset>
-        <legend>Team style</legend>
-        <div class="segmented">
-          <label title="No two members share a type"><input type="radio" name="style" value="abc"> ABC <small>balanced</small></label>
-          <label title="Exactly two members share a type: ABB (safe swap and closer) or ABA (lead and closer), whichever fits their roles better"><input type="radio" name="style" value="pair"> Shared type <small>ABB / ABA</small></label>
-          <label title="No typing rule: the highest-scoring team wins, shared types allowed"><input type="radio" name="style" value="any"> Best score</label>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend>Moves</legend>
-        <label class="check"><input type="checkbox" id="use-elite" checked> Use Elite moves
-          <small>Moves that need an Elite TM or a Community Day. Turn off to give your team each Pokémon's next best moves on PvPoke instead; opponents keep theirs.</small></label>
-      </fieldset>
-
-      <fieldset>
+      <fieldset class="your-picks">
         <legend>Your Pokémon</legend>
         <p class="hint">Pick one and get two partners, or pick two and get the best third.</p>
         <div class="picks">
@@ -76,10 +56,38 @@
         </div>
         <div class="quick" id="quick-picks"></div>
       </fieldset>
+
+      <div class="options">
+        <fieldset class="style">
+          <legend>Team style</legend>
+          <div class="segmented">
+            <label><input type="radio" name="style" value="abc"> ABC</label>
+            <label><input type="radio" name="style" value="pair"> Shared type</label>
+            <label><input type="radio" name="style" value="any"> Best score</label>
+          </div>
+        </fieldset>
+        <label class="check"><input type="checkbox" id="use-elite" checked> Use Elite moves</label>
+        <details class="explain">
+          <summary>What do these mean?</summary>
+          <dl>
+            <dt>ABC</dt><dd>No two members share a type: the most balanced team.</dd>
+            <dt>Shared type</dt><dd>Two members share a type, as ABB (safe swap and closer) or ABA (lead and closer), whichever fits their roles better.</dd>
+            <dt>Best score</dt><dd>No typing rule: the highest-scoring team wins.</dd>
+            <dt>Use Elite moves</dt><dd>Moves that need an Elite TM or a Community Day. Turn off to give your team each Pokémon's next best moves on PvPoke instead; opponents keep theirs.</dd>
+          </dl>
+        </details>
+      </div>
     </section>
 
-    <section class="panel" id="results" aria-live="polite">
+    <section class="panel results" id="results" aria-live="polite">
       <p class="placeholder">Loading Pokémon data…</p>
+    </section>
+
+    <!-- With no picks this sits right under the form as the starting point; with picks, below the results. -->
+    <section class="panel top-teams" id="top-teams" aria-labelledby="top-teams-title">
+      <h2 id="top-teams-title">Top teams</h2>
+      <p class="hint" id="top-teams-hint">Ranking teams…</p>
+      <ol class="top-list" id="top-list"></ol>
     </section>
   </main>
 

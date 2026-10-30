@@ -26,6 +26,8 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
 | 9. GO Battle League schedule | ✅ done |
 | 10. Megas | ✅ done |
 | 11. Use Elite moves option | ✅ done |
+| 12. Design, phone first | 🚧 phase 1 of 4 done (first screen) |
+| 13. Piloting advice | planned |
 
 ## Features
 
@@ -36,8 +38,11 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   Mega stats, and the "+" Mega move some of them get as a third charged move, marked **Mega**
 - Team styles: ABC (balanced, no shared types), Shared type (two members share a type, as ABB or
   ABA), or Best score (no typing rule); each suggested team is tagged with its layout
-- **Top teams** banner: the three highest-scoring teams overall (any typing) built from the top
-  50 Pokémon of the selected league or cup; pick one to open it
+- Formats grouped as **Live** this week, **Always** (the open leagues) and **Coming up**; on a
+  phone they sit in one row you swipe sideways
+- **Top teams**: the three highest-scoring teams overall (any typing) built from the top 50
+  Pokémon of the selected league or cup, shown under the form before you pick anything (and
+  below your results after); pick one to open it
 - Pokémon search by name or nickname (shadow forms included), plus one-tap popular picks
 - Pick one Pokémon to get two partners, or two to get the best third; the top 5 teams are listed
   with a team score out of 100
