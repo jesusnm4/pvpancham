@@ -315,6 +315,10 @@ takes the full width.
 10px card: 64px icon, role label in accent caps followed by a one-line plain note of what the
 role does (muted, sentence case), name, type chips, PvPoke rank link, then a
 definition list of moves (Elite and Mega tags), IVs, and a collapsible "Check your IVs".
+On phones (≤720px) each card starts as one line, a button with `aria-expanded`: 40px icon, name,
+role in accent caps, and the moves on a muted line (ellipsis when long), with an accent chevron
+that turns down when open. Tapping it shows the full card below without repeating the icon and
+name. Desktop always shows the full cards.
 
 ### Report
 Under the member cards, two columns (one on phones): **Closest matchups**, the three top-30

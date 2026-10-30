@@ -63,6 +63,7 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
 - **Compare with** another suggested team: score, winning answers to the top 100, the top-30
   wins / toss-ups / losses, and the top-30 Pokémon one team handles better than the other (kept
   in the link)
+- On a phone each team member is one line (icon, name, role, moves); tap it for the full card
 - **Save team** keeps teams you like on this device under "Your saved teams"; tap one to reopen it
 - Dead ends come with a one-tap fix: two Megas picked offers to remove either, picks dropped by a
   league change offer to go back, a team style with no team offers the other styles, and a failed

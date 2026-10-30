@@ -571,14 +571,20 @@
   }
 
   function renderDetail(d) {
-    var members = d.members.map(function (m) {
+    var members = d.members.map(function (m, i) {
       var fast = m.moves[0], charged = m.moves.slice(1);
       function move(mv) {
         return '<li>' + (mv.type ? '<span class="type dot" data-type="' + escapeHtml(mv.type) + '" title="' + escapeHtml(capitalize(mv.type)) + '"></span>' : '') +
           escapeHtml(mv.name) + (mv.elite ? ' <abbr class="elite" title="Needs an Elite TM or a Community Day">Elite</abbr>' : '') +
           (mv.mega ? ' <abbr class="elite mega" title="Mega move: a third charged move this Mega has, with bonus damage">Mega</abbr>' : '') + '</li>';
       }
+      // On a phone each member is one line (icon, name, role, moves) that opens to the full card.
       return '<article class="member">' +
+        '<button type="button" class="member-line" aria-expanded="false" aria-controls="member-' + i + '">' + icon(m.id, 40) +
+        '<span><span class="member-name">' + escapeHtml(m.name) + '</span> <span class="role">' + ROLE_NAMES[m.role] + '</span>' +
+        '<small>' + escapeHtml(fast.name) + ' · ' + charged.map(function (mv) { return escapeHtml(mv.name); }).join(', ') + '</small></span>' +
+        '<span class="chev" aria-hidden="true"></span></button>' +
+        '<div class="member-body" id="member-' + i + '">' +
         '<div class="member-head">' + icon(m.id, 64) + '<div>' +
         '<p class="role">' + ROLE_NAMES[m.role] + ' <span class="role-note">' + ROLE_NOTES[m.role] + '</span></p>' +
         '<h3>' + escapeHtml(m.name) + '</h3>' +
@@ -594,7 +600,7 @@
           ' <small>(Elite TM)</small></dd>' : '') +
         '<dt>Rank 1 IVs</dt><dd><span class="ivs" title="Attack / Defense / HP">' + m.ivs.atk + ' / ' + m.ivs.def + ' / ' + m.ivs.hp +
         '</span><br><small>Level ' + m.ivs.level + ' · CP ' + m.ivs.cp + '</small></dd>' +
-        '</dl>' + ivChecker(m) + '</article>';
+        '</dl>' + ivChecker(m) + '</div></article>';
     }).join('');
 
     function threatList(items) {
@@ -889,6 +895,13 @@
   resultsEl().addEventListener('click', function (ev) {
     var share = ev.target.closest('button[data-action="share"]');
     if (share) { copyLink(share); return; }
+    var line = ev.target.closest('button.member-line');
+    if (line) {
+      var open = line.getAttribute('aria-expanded') !== 'true';
+      line.setAttribute('aria-expanded', String(open));
+      line.closest('.member').classList.toggle('open', open);
+      return;
+    }
     var fix = ev.target.closest('button[data-fix]');
     if (fix) {
       var f = fixes[Number(fix.dataset.fix)];

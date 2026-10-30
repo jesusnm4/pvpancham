@@ -213,6 +213,7 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
    Also: one-tap recovery. Each dead-end message carries a fix button: "Remove <Mega>" for two
    Mega picks, "Back to <league>" (restoring the dropped picks) after a league change, "Try
    <style>" when a style has no team, "Reload the page" when data fails to load.
+   Also: on phones each member card is one line (icon, name, role, moves) that opens on tap.
 14. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
    shielding), and limited-format cups.
 

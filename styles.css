@@ -394,6 +394,7 @@ h1, h2, h3 { text-wrap: balance; }
 .members { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
 .member { border: 1px solid var(--border); border-radius: 10px; padding: 12px; min-width: 0; }
 .member-head { display: flex; gap: 10px; align-items: center; }
+.member-line { display: none; }
 .member-head .poke { width: 64px; height: 64px; }
 .member-head > div { min-width: 0; }
 .pvp-rank { margin: 0; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
@@ -449,8 +450,30 @@ h1, h2, h3 { text-wrap: balance; }
 @media (max-width: 720px) {
   .meta-grid { grid-template-columns: repeat(10, 1fr); }
   .top-list { grid-template-columns: 1fr; }
-  .members { grid-template-columns: 1fr; }
+  .members { grid-template-columns: 1fr; gap: 8px; }
   .report { grid-template-columns: 1fr; }
+  /* One line per member; tapping it opens the full card. */
+  .member { padding: 0; }
+  .member-line {
+    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 8px 12px;
+    border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+    border-radius: 10px;
+  }
+  .member-line .poke { width: 40px; height: 40px; flex-shrink: 0; }
+  .member-line > span:not(.chev) { flex: 1; min-width: 0; }
+  .member-line .member-name { font-weight: 600; }
+  .member-line small { display: block; color: var(--muted); font-size: var(--fs-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .member-line .chev {
+    flex-shrink: 0; width: 8px; height: 8px; margin-right: 4px;
+    border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent);
+    transform: rotate(-45deg); transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .member.open .chev { transform: rotate(45deg); }
+  .member-line:active { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .member:not(.open) .member-body { display: none; }
+  .member-body { padding: 0 12px 12px; }
+  /* The line already shows the icon and name. */
+  .member-body .member-head > .poke, .member-body .member-head h3 { display: none; }
 }
 
 @media (max-width: 520px) {
@@ -523,6 +546,7 @@ button:focus-visible, summary:focus-visible, a:focus-visible, select:focus-visib
   .chip, .top-team, .team-option, .saved-open, .saved-remove, .meta-cell, .segmented label, .league-row label { transition: none; }
   .chip:active, .top-team:active, .team-option:active, .saved > button:active, .meta-cell:active,
   .segmented label:active, .league-row label:active { transform: none; }
+  .member-line .chev { transition: none; }
 }
 
 .site-footer { color: var(--muted); font-size: var(--fs-sm); padding-bottom: 24px; }
