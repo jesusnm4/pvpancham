@@ -1,6 +1,7 @@
-# PokemonGoPvpHelper
+# PvPancham
 
-Helper to build PvP teams in Pokémon GO.
+A Pokémon GO PvP team builder (formerly PvP Team Helper), live at
+https://jesusnm4.github.io/pvpancham/.
 
 Pick a league and one Pokémon, and it suggests two partners to complete the team. Pick two, and it
 suggests the third that fills the gap best. Each team member comes with recommended moves, IVs, and
@@ -9,7 +10,7 @@ current meta.
 
 ## Status
 
-Live at **https://jesusnm4.github.io/PokemonGoPvpHelper/**. Pick a league, a team style and one or
+Live at **https://jesusnm4.github.io/pvpancham/**. Pick a league, a team style and one or
 two Pokémon to get suggested teams, share them as a link, and check your own Pokémon's IVs. See
 [PLAN.md](PLAN.md) for the design and milestones.
 
@@ -76,7 +77,7 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   replaced); opponents keep their usual moves
 - **Copy link** shares the exact view (league, style, picks, selected team, Elite TM setting,
   comparison), e.g.
-  `…/PokemonGoPvpHelper/#l=great&s=abc&p=medicham&t=2`
+  `…/pvpancham/#l=great&s=abc&p=medicham&t=2`
 - Pokémon GO icons for every ranked Pokémon (correct regional and other forms; shadows glow purple)
 - Remembers your league, style, picks and entered IVs; light and dark theme; works on phones
 

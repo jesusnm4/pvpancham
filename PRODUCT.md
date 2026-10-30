@@ -14,7 +14,7 @@ Discord or a group chat, and they pick a team just before or between GBL sets.
 
 ## Product Purpose
 
-PvP Team Helper turns one or two Pokémon the player has (or likes) into a complete three-Pokémon
+PvPancham turns one or two Pokémon the player has (or likes) into a complete three-Pokémon
 team for the league or cup that's on right now: partners, moves, IVs, a role for each member, and
 how the team fares against the meta. Success is a player who leaves with a team they understand
 and can use in the next set, without needing to be an expert or read a ranking table.
@@ -50,7 +50,8 @@ and can use in the next set, without needing to be an expert or read a ranking t
 
 ## Brand Commitments
 
-- Name: PvP Team Helper. Unofficial fan project: no Niantic or The Pokémon Company branding beyond
+- Name: PvPancham (shown with the tagline "Pokémon GO PvP team builder"; formerly PvP Team
+  Helper), at https://jesusnm4.github.io/pvpancham/. Unofficial fan project: no Niantic or The Pokémon Company branding beyond
   credited Pokémon GO icons; PvPoke credited as the data source (MIT).
 - Voice: plain, honest, concise. A "weakness" can still be a win, so wording stays accurate.
 

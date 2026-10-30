@@ -4,7 +4,9 @@ Guidance for Claude Code when working in this repository.
 
 ## Project
 
-Static Pokémon GO PvP team builder, hosted on GitHub Pages from `main` (root). Design and
+PvPancham (formerly PvP Team Helper), a static Pokémon GO PvP team builder, hosted on GitHub
+Pages from `main` (root) of `jesusnm4/pvpancham` at https://jesusnm4.github.io/pvpancham/ (the
+repo was `PokemonGoPvpHelper` until 2026-10-30; the old Pages address no longer works). Design and
 milestones live in `PLAN.md`.
 
 ## Rules

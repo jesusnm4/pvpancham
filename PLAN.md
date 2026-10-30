@@ -1,6 +1,6 @@
 # Plan
 
-Pokémon GO PvP team builder. Give it one Pokémon and it suggests two partners, or give it two
+PvPancham, a Pokémon GO PvP team builder. Give it one Pokémon and it suggests two partners, or give it two
 and it suggests the third. Each team member comes with recommended moves, IVs, and a role, and the
 team gets its top 3 strengths and top 3 weaknesses against the current meta.
 

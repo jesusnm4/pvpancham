@@ -1,5 +1,5 @@
 ---
-name: PvP Team Helper
+name: PvPancham
 description: Pokémon GO PvP team builder for the leagues and cups on this week.
 colors:
   accent: "#2a62c9"
@@ -116,7 +116,7 @@ components:
     padding: "0 6px"
 ---
 
-# Design System: PvP Team Helper
+# Design System: PvPancham
 
 <!-- Recorded from the code at 2d8bc5c and updated through design phase 4 (polish) and its follow-ups in
      PLAN.md. Update this file as each phase lands. -->
