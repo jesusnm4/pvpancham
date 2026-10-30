@@ -210,6 +210,9 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
    top 30, and said so. It can be collapsed, and stays as the viewer left it. ✅
    Also: teams hold at most one Mega or Primal (Master League (Megas) had been suggesting three),
    and Shared weaknesses names which of your Pokémon each type hits.
+   Also: one-tap recovery. Each dead-end message carries a fix button: "Remove <Mega>" for two
+   Mega picks, "Back to <league>" (restoring the dropped picks) after a league change, "Try
+   <style>" when a style has no team, "Reload the page" when data fails to load.
 14. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
    shielding), and limited-format cups.
 

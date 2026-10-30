@@ -291,6 +291,12 @@ the h3 and the accent disclosure arrow, then a numbered list of up to five plain
 and a hint saying they come from simulated 1-1 shield battles against the top 30. No icons or
 colour; it reads as notes.
 
+### Recovery fixes
+A message that describes a dead end (error, notice or placeholder in the results panel) is
+followed by a row of ordinary chips that fix it in one tap: remove a Mega, go back to the
+previous league, try another team style, reload. Plain labels naming the action; no icons,
+no colour beyond the chip.
+
 ### Saved teams
 "Save team" is a chip in the team header's action row (`aria-pressed`; "Saved" in the accent when
 on). "Your saved teams" is a panel between results and top teams, hidden when empty: rows like

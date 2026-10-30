@@ -55,6 +55,8 @@
   var described = [];  // Engine.describeTeam() of each, for the detail view
   var runId = 0;       // ignores results from a superseded search
   var revealResults = false;  // set by a user pick: scroll new results into view if off-screen
+  var fixes = [];             // one-tap fixes offered with the current message: [{ label, run }]
+  var leagueUndo = null;      // { league, picks } before the last league change, to undo dropped picks
   var TOP_COUNT = 3;
   var topTeams = {};   // contextKey -> Engine.bestTeams() for the banner (best score, no typing rule)
   var topRunId = 0;    // ignores a banner search for a league the viewer already left
@@ -393,10 +395,33 @@
     resultsEl().removeAttribute('aria-busy');
   }
 
-  function showMessage(html, cls) {
+  function showMessage(html, cls, actions) {
     notBusy();
     resultsEl().hidden = false;
-    resultsEl().innerHTML = '<p class="' + (cls || 'placeholder') + '">' + html + '</p>';
+    resultsEl().innerHTML = '<p class="' + (cls || 'placeholder') + '">' + html + '</p>' + fixButtons(actions);
+  }
+
+  // Buttons that fix what a message describes, so a dead end is one tap from a result.
+  function fixButtons(actions) {
+    fixes = actions || [];
+    if (!fixes.length) return '';
+    return '<p class="fixes">' + fixes.map(function (f, i) {
+      return '<button type="button" class="chip" data-fix="' + i + '">' + escapeHtml(f.label) + '</button>';
+    }).join('') + '</p>';
+  }
+
+  function isMegaId(ctx, id) {
+    var e = ctx.byId[id];
+    return !!(e && e.pokemon.tags && e.pokemon.tags.indexOf('mega') !== -1);
+  }
+
+  function setStyle(style) {
+    state.style = style;
+    state.selected = 0;
+    state.compare = null;
+    save();
+    syncRadios();
+    runSearch();
   }
 
   function runSearch(notice) {
@@ -404,6 +429,9 @@
     var league = state.league;
     var third = openThird;  // only the search a banner click starts selects its team
     openThird = null;
+    var undo = leagueUndo;  // only the search a league change starts can offer to undo it
+    leagueUndo = null;
+    var actions = [];
     contextFor(league).then(function (ctx) {
       if (id !== runId) return;
       var dropped = validatePicks(ctx);
@@ -412,13 +440,29 @@
       if (dropped.length) {
         notice = dropped.length === 1 ? 'Your previous pick isn’t ranked in ' + LEAGUE_NAMES[league] + ', so it was removed.'
           : 'Your previous picks aren’t ranked in ' + LEAGUE_NAMES[league] + ', so they were removed.';
+        if (undo && undo.league !== league && LEAGUES.indexOf(undo.league) !== -1) {
+          actions.push({ label: 'Back to ' + LEAGUE_NAMES[undo.league], run: function () {
+            state.league = undo.league;
+            state.picks = undo.picks.slice();
+            state.selected = 0;
+            state.compare = null;
+            save();
+            syncRadios();
+            revealLeague();
+            applyAccent();
+            syncCombos();
+            renderQuickPicks();
+            runSearch();
+            renderTopTeams();
+          } });
+        }
       }
       var picks = currentPicks();
       if (!picks.length) {
         teams = [];
         described = [];
         // Nothing to show yet: the top teams below the form are the starting point.
-        if (notice) showMessage(escapeHtml(notice), 'notice');
+        if (notice) showMessage(escapeHtml(notice), 'notice', actions);
         else { notBusy(); resultsEl().hidden = true; resultsEl().innerHTML = ''; }
         return;
       }
@@ -435,12 +479,20 @@
         try {
           teams = window.Engine.suggest(ctx, picks, state.style, 5);
         } catch (err) {
-          showMessage(escapeHtml(err.message), 'error');
+          // Two Megas: offer to drop either one.
+          var megaFixes = picks.length === 2 && picks.every(function (p) { return isMegaId(ctx, p); })
+            ? picks.map(function (p, slot) {
+                return { label: 'Remove ' + ctx.byId[p].pokemon.name, run: function () { setPick(slot, null); } };
+              })
+            : [];
+          showMessage(escapeHtml(err.message), 'error', megaFixes);
           return;
         }
         if (!teams.length) {
           showMessage('No ' + STYLE_NAMES[state.style] + ' team fits ' + (picks.length === 1 ? 'this pick' : 'these picks') +
-            '. Try another team style.');
+            '. Try another team style:', 'placeholder', STYLES.filter(function (st) { return st !== state.style; }).map(function (st) {
+              return { label: 'Try ' + STYLE_NAMES[st], run: function () { setStyle(st); } };
+            }));
           return;
         }
         if (third) {
@@ -449,15 +501,16 @@
           save();
         }
         state.selected = Math.min(state.selected, teams.length - 1);
-        renderTeams(ctx, notice);
+        renderTeams(ctx, notice, actions);
       }, 30);
     }).catch(function (err) {
       if (id !== runId) return;
-      showMessage('Could not load Pokémon data (' + escapeHtml(err.message) + '). Try reloading the page.', 'error');
+      showMessage('Could not load Pokémon data (' + escapeHtml(err.message) + ').', 'error',
+        [{ label: 'Reload the page', run: function () { location.reload(); } }]);
     });
   }
 
-  function renderTeams(ctx, notice) {
+  function renderTeams(ctx, notice, actions) {
     // A link or saved view can name a comparison that no longer fits the results.
     if (state.compare !== null && (state.compare >= teams.length || state.compare === state.selected)) { state.compare = null; save(); }
     described = teams.map(function (t) { return window.Engine.describeTeam(ctx, t); });
@@ -478,7 +531,7 @@
     notBusy();
     resultsEl().hidden = false;
     resultsEl().innerHTML =
-      (notice ? '<p class="notice">' + escapeHtml(notice) + '</p>' : '') +
+      (notice ? '<p class="notice">' + escapeHtml(notice) + '</p>' + fixButtons(actions) : fixButtons([])) +
       '<div class="results-head"><h2>' + heading + '</h2>' +
       '<button type="button" class="chip" data-action="share">Copy link</button></div>' +
       '<p class="hint">' + LEAGUE_NAMES[state.league] + ', ' + STYLE_HINTS[state.style] + (state.noElite ? ', without Elite TM moves' : '') +
@@ -836,6 +889,12 @@
   resultsEl().addEventListener('click', function (ev) {
     var share = ev.target.closest('button[data-action="share"]');
     if (share) { copyLink(share); return; }
+    var fix = ev.target.closest('button[data-fix]');
+    if (fix) {
+      var f = fixes[Number(fix.dataset.fix)];
+      if (f) f.run();
+      return;
+    }
     if (ev.target.closest('button[data-action="save-team"]') && described[state.selected]) {
       toggleSaved(described[state.selected]);
       refreshSaveButton();
@@ -1053,11 +1112,12 @@
       input.checked = input.value === state[field];
       input.addEventListener('change', function () {
         if (!input.checked) return;
+        var previous = state[field];
         state[field] = input.value;
         state.selected = 0;
         state.compare = null;
         save();
-        if (onChange) onChange();
+        if (onChange) onChange(previous);
       });
     });
   }
@@ -1081,7 +1141,9 @@
   });
 
   renderLeagueOptions();
-  bindRadios('league', 'league', function () { applyAccent(); syncCombos(); renderQuickPicks(); runSearch(); renderTopTeams(); });
+  bindRadios('league', 'league', function (previous) {
+    leagueUndo = { league: previous, picks: state.picks.slice() };
+    applyAccent(); syncCombos(); renderQuickPicks(); runSearch(); renderTopTeams(); });
   revealLeague();
   applyAccent();
   bindRadios('style', 'style', function () { runSearch(); });

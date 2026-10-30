@@ -64,6 +64,9 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   wins / toss-ups / losses, and the top-30 Pokémon one team handles better than the other (kept
   in the link)
 - **Save team** keeps teams you like on this device under "Your saved teams"; tap one to reopen it
+- Dead ends come with a one-tap fix: two Megas picked offers to remove either, picks dropped by a
+  league change offer to go back, a team style with no team offers the other styles, and a failed
+  data load offers to reload
 - **Check your IVs** on any team member: your spread's rank among all IV combinations, its stat
   product as a % of rank 1, and the level and CP it reaches under the cap
 - **Use Elite moves** (on by default): turn it off and your team uses each Pokémon's next best moves
