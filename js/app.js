@@ -170,6 +170,10 @@
   }
 
   // Plain-language reading of a battle rating (500 = even).
+  // The three bands of the meta grid, on the same thresholds as verdict().
+  function band(rating) { return rating > 550 ? 'win' : rating >= 450 ? 'even' : 'loss'; }
+  var BAND_NAMES = { win: 'win', even: 'toss-up', loss: 'loss' };
+
   function verdict(rating) {
     if (rating >= 700) return 'strong win';
     if (rating > 550) return 'win';
@@ -522,11 +526,39 @@
       '<p class="coverage">Has a winning answer to <strong>' + d.beats + ' of the top ' + d.threatCount +
       '</strong> Pokémon in ' + LEAGUE_NAMES[state.league] + '.</p>' +
       (layoutNote ? '<p class="hint">' + layoutNote + '</p>' : '') + '</div></div>' +
+      metaGrid(d.meta) +
       '<div class="members">' + members + '</div>' +
       '<div class="report">' +
       '<section><h3>Top strengths</h3><p class="hint">Top-30 meta threats this team beats most easily.</p>' + threatList(d.strengths, true) + '</section>' +
       '<section><h3>Top weaknesses</h3><p class="hint">Top-30 meta threats with the team’s closest matchups, even if it still wins them.</p>' + threatList(d.weaknesses, false) + shared + '</section>' +
       '</div>';
+  }
+
+  // The top 30 of the meta, each tinted by the team's best matchup against it. Tapping one names
+  // the member that answers it in the note under the grid.
+  function metaGrid(meta) {
+    // A cached engine.js from before the grid (e.g. just after a deploy) has no meta: skip the grid.
+    if (!meta || !meta.length) return '';
+    var count = { win: 0, even: 0, loss: 0 };
+    meta.forEach(function (t) { count[band(t.rating)]++; });
+    function tally(b, one, many) {
+      return '<span class="tally ' + b + '"><span class="swatch"></span>' + count[b] + ' ' + (count[b] === 1 ? one : many) + '</span>';
+    }
+    return '<section class="meta" aria-labelledby="meta-title">' +
+      '<div class="meta-head"><h3 id="meta-title">Against the top ' + meta.length + '</h3>' +
+      '<p class="meta-tally">' + tally('win', 'win', 'wins') + tally('even', 'toss-up', 'toss-ups') + tally('loss', 'loss', 'losses') + '</p></div>' +
+      '<ol class="meta-grid">' + meta.map(function (t, i) {
+        var b = band(t.rating);
+        return '<li><button type="button" class="meta-cell ' + b + '" data-meta="' + i + '" aria-pressed="false" aria-label="#' + (i + 1) + ' ' +
+          escapeHtml(t.name) + ': ' + BAND_NAMES[b] + '" title="#' + (i + 1) + ' ' + escapeHtml(t.name) + '">' +
+          icon(t.id, 40) + '<span class="meta-rank">' + (i + 1) + '</span></button></li>';
+      }).join('') + '</ol>' +
+      '<p class="meta-note" aria-live="polite">Tap a Pokémon to see your best answer to it.</p></section>';
+  }
+
+  function metaNote(t, i) {
+    return '<strong>#' + (i + 1) + ' ' + escapeHtml(t.name) + '</strong> ' + typeChips(t.types) + ' · best answer ' +
+      escapeHtml(t.answer) + ': <span class="verdict" title="Battle rating ' + t.rating + ' (500 is even)">' + verdict(t.rating) + '</span>';
   }
 
   function copyLink(btn) {
@@ -546,6 +578,16 @@
   resultsEl().addEventListener('click', function (ev) {
     var share = ev.target.closest('button[data-action="share"]');
     if (share) { copyLink(share); return; }
+    var cell = ev.target.closest('button[data-meta]');
+    var d = described[state.selected];
+    if (cell && d && d.meta) {
+      var i = Number(cell.dataset.meta);
+      Array.prototype.forEach.call(resultsEl().querySelectorAll('.meta-cell'), function (c) {
+        c.setAttribute('aria-pressed', String(c === cell));
+      });
+      resultsEl().querySelector('.meta-note').innerHTML = metaNote(d.meta[i], i);
+      return;
+    }
     var btn = ev.target.closest('button[data-team]');
     if (!btn || !described[Number(btn.dataset.team)]) return;
     state.selected = Number(btn.dataset.team);
@@ -646,6 +688,15 @@
   }
 
   // Three groups, in this order: live in GBL this week, always available, and starting within a week.
+  // League colour as the page accent, like the game: Great blue, Ultra gold, Master purple. Cups
+  // with their own rules get a neutral accent; the open Mega formats follow their CP cap.
+  function applyAccent() {
+    var f = FORMATS.filter(function (x) { return x.id === state.league; })[0];
+    var family = !f ? 'great' : f.cup !== 'all' && f.cup !== 'mega' ? 'cup'
+      : f.cp <= 1500 ? 'great' : f.cp <= 2500 ? 'ultra' : 'master';
+    document.documentElement.dataset.league = family;
+  }
+
   function renderLeagueOptions() {
     var live = [], always = [], soon = [], until = null;
     FORMATS.forEach(function (f) {
@@ -722,6 +773,7 @@
     save();
     syncRadios();
     revealLeague();
+    applyAccent();
     syncCombos();
     renderQuickPicks();
     runSearch();
@@ -760,8 +812,9 @@
   });
 
   renderLeagueOptions();
-  bindRadios('league', 'league', function () { syncCombos(); renderQuickPicks(); runSearch(); renderTopTeams(); });
+  bindRadios('league', 'league', function () { applyAccent(); syncCombos(); renderQuickPicks(); runSearch(); renderTopTeams(); });
   revealLeague();
+  applyAccent();
   bindRadios('style', 'style', function () { runSearch(); });
   bindTheme();
   renderDataDate();

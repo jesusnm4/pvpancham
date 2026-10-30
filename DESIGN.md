@@ -2,8 +2,20 @@
 name: PvP Team Helper
 description: Pokémon GO PvP team builder for the leagues and cups on this week.
 colors:
-  accent: "#2f6fde"
+  accent: "#2a62c9"
   accent-dark: "#6b9cf0"
+  accent-ultra: "#8a6400"
+  accent-ultra-dark: "#e2b53e"
+  accent-master: "#6a3fc4"
+  accent-master-dark: "#b195f2"
+  accent-cup: "#4a5361"
+  accent-cup-dark: "#b4bcc6"
+  band-win: "#187a42"
+  band-win-dark: "#5cc98d"
+  band-even: "#8a6400"
+  band-even-dark: "#e2b53e"
+  band-loss: "#b42318"
+  band-loss-dark: "#f97066"
   accent-text: "#ffffff"
   accent-text-dark: "#0d1014"
   live: "#187a42"
@@ -106,7 +118,7 @@ components:
 
 # Design System: PvP Team Helper
 
-<!-- Recorded from the code at 2d8bc5c and updated through design phase 2 (type) in
+<!-- Recorded from the code at 2d8bc5c and updated through design phase 3 (meta grid, league accents) in
      PLAN.md. Update this file as each phase lands. -->
 
 ## Overview
@@ -134,9 +146,26 @@ clear selected state.
 
 A cool neutral notebook with one blue pen and the game's type colours as small tints.
 
-### Primary
-- **Notebook Blue** (#2f6fde light, #6b9cf0 dark): selected league and style chips, the selected
-  team, member roles, links, focus rings, Elite tags, the top-teams panel border (45% mix).
+### Primary: the league pen
+The accent (`--accent`) follows the selected format, as the game colours its leagues. `app.js`
+sets `data-league` on `<html>` (`applyAccent`): open leagues and the open Mega formats by CP cap,
+cups with their own rules neutral.
+- **Notebook Blue** (#2a62c9 light, #6b9cf0 dark): Great League and 1,500 CP Mega formats; also
+  the default.
+- **Ultra Gold** (#8a6400 / #e2b53e): Ultra League formats.
+- **Master Purple** (#6a3fc4 / #b195f2): Master League formats.
+- **Cup Slate** (#4a5361 / #b4bcc6): cups (e.g. Mega Halloween, Catch).
+
+It marks selected league and style chips, the selected team, member roles, links, focus rings,
+Elite tags and the top-teams panel border (45% mix). Every accent clears 4.5:1 against the page
+and against its chip text (white in light, #0d1014 in dark).
+
+### Matchup bands
+The meta grid's three bands, on the same thresholds as the verdict words (win above 550, toss-up
+450–550, loss below 450):
+- **Win** (#187a42 / #5cc98d), **Toss-up** (#8a6400 / #e2b53e), **Loss** (#b42318 / #f97066),
+  each as a 16% tint with a 50% border (losses 24% and a 2px border; toss-ups dashed), so the
+  bands differ in more than hue.
 
 ### Secondary
 - **Live Green** (#187a42 light, #5cc98d dark, `--live`): the "Live until …" label on the group of
@@ -155,7 +184,7 @@ The 18 game type colours (`.type[data-type]`, e.g. fire #e62829, water #2980ef) 
 22% with a 60% border; text stays in Ink. Dark and ghost get lighter values in dark mode. Shadow
 Pokémon icons get a purple glow (#8a3fd1).
 
-**The One Pen Rule.** Blue is the only interactive colour. A second hue appears only when it carries
+**The One Pen Rule.** The league accent is the only interactive colour. A second hue appears only when it carries
 meaning the blue can't (Live, a type, an error).
 
 ## Typography
@@ -247,6 +276,14 @@ Selected (`aria-pressed`): blue border, 10% blue tint, blue rank dot.
 Above the member cards: the score (32px) with "of 100" under it, then the team's names (20px),
 "Has a winning answer to N of the top 100 Pokémon in …" with the figure in bold, and the layout
 note as a hint. 24px above, 16px below.
+
+### Meta grid
+"Against the top 30": the league's top 30 threats in rank order, 15 across on desktop, 10 on
+tablets, 6 on phones. Each square cell holds the icon (70%), its meta rank (12px, top left) and
+the band tint. A tally with swatches (wins, toss-ups, losses) sits right of the heading. Tapping
+a cell outlines it in the accent and writes the threat, its types, the team's best answer and
+the verdict in the note below. Press: scale 0.95 over 120ms on a strong ease-out; none with
+reduced motion.
 
 ### Member card
 10px card: 64px icon, role label in blue caps, name, type chips, PvPoke rank link, then a

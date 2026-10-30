@@ -26,7 +26,7 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
 | 9. GO Battle League schedule | ✅ done |
 | 10. Megas | ✅ done |
 | 11. Use Elite moves option | ✅ done |
-| 12. Design, phone first | 🚧 phases 1–2 of 4 done (first screen, type) |
+| 12. Design, phone first | 🚧 phases 1–3 of 4 done (first screen, type, meta grid) |
 | 13. Piloting advice | planned |
 
 ## Features
@@ -49,8 +49,11 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   top 100 it has a winning answer to
 - Per Pokémon: role (lead, safe swap, closer), its PvPoke rank and score in the league (linked to
   PvPoke), recommended fast and charged moves (Elite TM moves marked), rank-1 IVs with level and CP
-- Per team: how many of the league's top 100 it has a winning answer to, top 3 strengths, top 3
-  weaknesses, and any type that hits two members super-effectively
+- Per team: how many of the league's top 100 it has a winning answer to; **Against the top 30**,
+  a grid of the league's top 30 Pokémon tinted win / toss-up / loss by the team's best matchup
+  (tap one to see which member answers it); top 3 strengths, top 3 weaknesses, and any type that
+  hits two members super-effectively
+- The page takes the league's colour: blue for Great, gold for Ultra, purple for Master
 - **Check your IVs** on any team member: your spread's rank among all IV combinations, its stat
   product as a % of rank 1, and the level and CP it reaches under the cap
 - **Use Elite moves** (on by default): turn it off and your team uses each Pokémon's next best moves

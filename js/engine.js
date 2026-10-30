@@ -714,6 +714,8 @@
       beats: beats,
       threatCount: ctx.threats.length,
       members: members,
+      // The top REPORT_THREATS of the meta in rank order, each with the team's best answer to it.
+      meta: report,
       strengths: strengths,
       weaknesses: weaknesses,
       sharedWeaknesses: sharedWeaknesses(team.members.map(function (e) { return e.pokemon; }))

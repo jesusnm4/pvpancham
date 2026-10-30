@@ -188,8 +188,10 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
    2. *Type:* a five-step scale (12/14/16/20/32 px, `--fs-*`), tabular figures, 16px team
       detail on phones, and a team header leading with the score and "Has a winning answer to N
       of the top 100". ✅
-   3. *Meta coverage and accents:* a top-30 threat grid tinted by the team's best matchup,
-      per-league accent colours, contrast fixes.
+   3. *Meta coverage and accents:* "Against the top 30", a grid of the league's top 30 threats
+      tinted win / toss-up / loss by the team's best matchup (`describeTeam().meta`); tap one for
+      the member that answers it. The accent follows the league (Great blue, Ultra gold, Master
+      purple, cups slate), every accent at 4.5:1 or better. ✅
    4. *Polish,* then a fresh critique.
 13. **Piloting advice:** a short, plain note per team on how to play it (lead, when to swap, what
    to save shields for), generated from its roles, moves and matchups. Wording to be decided.
