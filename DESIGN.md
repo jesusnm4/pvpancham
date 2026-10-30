@@ -22,14 +22,19 @@ colors:
   rule-dark: "#30353d"
   shadow-glow: "#8a3fd1"
 typography:
-  site-title:
+  score:
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
-    fontSize: "1.5rem"
+    fontSize: "2rem"
     fontWeight: 700
+    lineHeight: 1
+    letterSpacing: "-0.02em"
+    fontFeature: "tnum"
   headline:
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
-    fontSize: "1.125rem"
+    fontSize: "1.25rem"
     fontWeight: 700
+    lineHeight: 1.25
+    letterSpacing: "-0.01em"
   title:
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "1rem"
@@ -43,6 +48,7 @@ typography:
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
+    lineHeight: 1.5
   label:
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "0.75rem"
@@ -100,7 +106,7 @@ components:
 
 # Design System: PvP Team Helper
 
-<!-- Recorded from the code at 2d8bc5c and updated through design phase 1 (first screen) in
+<!-- Recorded from the code at 2d8bc5c and updated through design phase 2 (type) in
      PLAN.md. Update this file as each phase lands. -->
 
 ## Overview
@@ -160,15 +166,24 @@ meaning the blue can't (Live, a type, an error).
 weight and a small size step, not from a second family.
 
 ### Hierarchy
-- **Site title** (700, 1.5rem): the header only.
-- **Headline** (700, 1.125rem): section headings (Top teams, results).
-- **Title** (700, 1rem): member names, report headings.
-- **Body** (400, 16px, 1.5): running text, inputs.
-- **Small** (400, 0.875rem–0.8125rem): hints, chips, member details, footer.
-- **Label** (600, 0.75rem, 0.04em, uppercase): member roles, layout tags; 0.6875rem for Live/Elite
-  badges.
+Five steps, as CSS custom properties: `--fs-xs` 12, `--fs-sm` 14, `--fs-md` 16, `--fs-lg` 20,
+`--fs-xl` 32px. No other size ships; `<small>` is pinned to `--fs-sm`.
+- **Score** (700, 32px, line-height 1, −0.02em, tabular): the selected team's score, once per
+  screen, in the team header.
+- **Headline** (700, 20px, 1.25, −0.01em): the site title, section headings, the team header's
+  names.
+- **Title** (700, 16px): member names, report headings.
+- **Body** (400, 16px, 1.5): running text, inputs; on phones also member details, threat lists
+  and the IV checker, which are the main reading there.
+- **Small** (400, 14px): hints, chips, member details on desktop, footer.
+- **Label** (600, 12px): member roles and layout tags (0.04em, uppercase), group labels, badges.
 
-Figures that compare (team score, IVs) use `font-variant-numeric: tabular-nums`.
+Headings use `text-wrap: balance`, hints `text-wrap: pretty`. Every figure that is compared
+(scores, ranks, IVs, rank dots) uses `font-variant-numeric: tabular-nums`.
+
+**The One Big Number Rule.** Only the selected team's score is set large. Every other figure
+stays at its text size; the score's meaning ("Has a winning answer to N of the top 100") sits
+right beside it.
 
 ## Layout
 
@@ -227,6 +242,11 @@ above a 1px rule; the disclosure opens a definition list explaining each choice.
 ### Team list
 Full-width rows: rank dot, icons (overlapping by 6px), names, layout tag (ABC / ABB / ABA), score.
 Selected (`aria-pressed`): blue border, 10% blue tint, blue rank dot.
+
+### Team header
+Above the member cards: the score (32px) with "of 100" under it, then the team's names (20px),
+"Has a winning answer to N of the top 100 Pokémon in …" with the figure in bold, and the layout
+note as a hint. 24px above, 16px below.
 
 ### Member card
 10px card: 64px icon, role label in blue caps, name, type chips, PvPoke rank link, then a

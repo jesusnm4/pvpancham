@@ -515,9 +515,13 @@
         }).join(' ') + '</p>'
       : '<p class="shared">No type hits two members super-effectively.</p>';
 
-    var layoutNote = LAYOUT_NOTES[d.layout] ? ' Layout <strong>' + d.layout + '</strong>: ' + LAYOUT_NOTES[d.layout] + '.' : '';
-    return '<p class="coverage">Has a winning answer to <strong>' + d.beats + ' of the top ' + d.threatCount +
-      '</strong> Pokémon in ' + LEAGUE_NAMES[state.league] + '.' + layoutNote + '</p>' +
+    var layoutNote = LAYOUT_NOTES[d.layout] ? 'Layout <strong>' + d.layout + '</strong>: ' + LAYOUT_NOTES[d.layout] + '.' : '';
+    return '<div class="team-head">' +
+      '<p class="team-figure" title="Team score out of 100"><b>' + d.displayScore + '</b><small>of 100</small></p>' +
+      '<div><h3>' + d.members.map(function (m) { return escapeHtml(m.name); }).join(' · ') + '</h3>' +
+      '<p class="coverage">Has a winning answer to <strong>' + d.beats + ' of the top ' + d.threatCount +
+      '</strong> Pokémon in ' + LEAGUE_NAMES[state.league] + '.</p>' +
+      (layoutNote ? '<p class="hint">' + layoutNote + '</p>' : '') + '</div></div>' +
       '<div class="members">' + members + '</div>' +
       '<div class="report">' +
       '<section><h3>Top strengths</h3><p class="hint">Top-30 meta threats this team beats most easily.</p>' + threatList(d.strengths, true) + '</section>' +

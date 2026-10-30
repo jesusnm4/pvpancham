@@ -185,8 +185,9 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
       Your Pokémon next, team style and Elite moves on one row with explanations behind "What do
       these mean?". With no picks the top teams are the starting point under the form; with picks
       they move below the results. Team rows put the names on their own line on phones. ✅
-   2. *Type:* a five-step scale (12/14/16/20/32), tabular figures, and a team header leading with
-      the score and "beats N of the top 100".
+   2. *Type:* a five-step scale (12/14/16/20/32 px, `--fs-*`), tabular figures, 16px team
+      detail on phones, and a team header leading with the score and "Has a winning answer to N
+      of the top 100". ✅
    3. *Meta coverage and accents:* a top-30 threat grid tinted by the team's best matchup,
       per-league accent colours, contrast fixes.
    4. *Polish,* then a fresh critique.
