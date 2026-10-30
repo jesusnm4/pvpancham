@@ -2,11 +2,15 @@ name: Update PvPoke data
 
 on:
   schedule:
-    - cron: "17 6 * * 1"   # Mondays 06:17 UTC
+    # Daily: PvPoke often publishes a cup's rankings the day before it starts.
+    - cron: "17 6 * * *"
+    # Tuesdays 18:17 UTC, before the GO Battle League week changes at 20:00 UTC.
+    - cron: "17 18 * * 2"
   workflow_dispatch:
 
 permissions:
   contents: write
+  issues: write   # the "Data refresh needs attention" issue
 
 concurrency:
   group: update-data
@@ -28,12 +32,16 @@ jobs:
 
       - name: Download and trim
         run: python3 scripts/update_data.py
+        env:
+          DATA_WARNINGS: ${{ runner.temp }}/warnings.txt
 
       # Icons for newly ranked Pokémon or changed upstream icons; unchanged ones are not re-downloaded.
       - name: Update Pokémon images
         run: |
           pip install --quiet pillow
           python3 scripts/update_images.py
+        env:
+          DATA_WARNINGS: ${{ runner.temp }}/warnings.txt
 
       # A PvPoke change that breaks the engine must not reach the live site.
       - name: Engine tests against the new data
@@ -50,3 +58,11 @@ jobs:
           git add data img
           git commit -m "Update PvPoke data snapshot"
           git push
+
+      # Warnings (an unmapped GBL league, a schedule running out, missing rankings or icons) only
+      # show on the run page; this opens, updates or closes an issue so they arrive by email.
+      # A failed run already gets GitHub's own email, sent to whoever last edited the schedule above.
+      - name: Report warnings
+        run: scripts/report_warnings.sh "$RUNNER_TEMP/warnings.txt" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+        env:
+          GH_TOKEN: ${{ github.token }}

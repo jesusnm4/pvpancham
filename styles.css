@@ -84,6 +84,17 @@ legend { font-weight: 600; margin-bottom: 8px; }
 
 .segmented small { opacity: 0.75; }
 
+/* GO Battle League status on a format: live this week, or the date a cup starts. */
+.status {
+  margin-left: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
+  padding: 0 6px; border-radius: 999px; vertical-align: 1px; display: inline-block; white-space: nowrap;
+}
+.status.live { background: #1f8a4c; color: #ffffff; }
+.status.soon { border: 1px solid currentColor; opacity: 0.8; }
+.segmented label:has(input:checked) .status.live { background: var(--accent-text); color: var(--accent); }
+.gbl-week { margin: 10px 0 0; }
+.gbl-week small { font-size: inherit; }
+
 select {
   background: var(--surface);
   color: var(--text);

@@ -25,11 +25,14 @@
     </section>
   </main>
 
+  <script src="data/formats.js"></script>
   <script src="data/gamemaster.js"></script>
-  <script src="data/rankings-great.js"></script>
-  <script src="data/rankings-ultra.js"></script>
-  <script src="data/rankings-master.js"></script>
-  <script src="data/rankings-fantasy.js"></script>
+  <script>
+    // One rankings file per format on offer (data/formats.js); written in so they load in order.
+    window.PvpData.raw.formats.formats.forEach(function (f) {
+      document.write('<script src="data/rankings-' + f.id + '.js"><\/script>');
+    });
+  </script>
   <script src="js/engine.js"></script>
   <script src="js/engine.test.js"></script>
   <script>

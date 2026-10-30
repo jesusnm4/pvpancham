@@ -30,7 +30,6 @@ OUT = os.path.join(ROOT, "img", "pokemon")
 SIZE = 128
 # Bump when convert() changes, so every icon is regenerated once.
 FORMAT = 2
-LEAGUES = ("great", "ultra", "master", "fantasy")
 
 # PvPoke id token -> Pokémon GO form name, where they differ.
 ALIAS = {"alolan": "ALOLA", "galarian": "GALARIAN", "hisuian": "HISUIAN", "paldean": "PALDEA"}
@@ -117,7 +116,8 @@ def convert(png_bytes, path):
 def main():
     gm = load_js("gamemaster.js")
     by_id = {p["id"]: p for p in gm["pokemon"]}
-    ranked = sorted({r["id"] for league in LEAGUES for r in load_js("rankings-%s.js" % league)})
+    formats = [f["id"] for f in load_js("formats.js")["formats"]]
+    ranked = sorted({r["id"] for fid in formats for r in load_js("rankings-%s.js" % fid)})
 
     sources = list_sources()
     if len(sources) < 1000:
@@ -172,6 +172,11 @@ def main():
         print("No icon found (shown without an image; add to OVERRIDES if the icon exists):")
         for m in missing:
             print("  " + m)
+        # Added to the data refresh's warnings, for the workflow's "needs attention" issue.
+        if os.environ.get("DATA_WARNINGS"):
+            with open(os.environ["DATA_WARNINGS"], "a", encoding="utf-8") as f:
+                f.write("No icon for %s (shown without an image; add it to OVERRIDES in "
+                        "scripts/update_images.py if the icon exists)\n" % ", ".join(missing))
 
 
 if __name__ == "__main__":

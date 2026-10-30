@@ -2,11 +2,27 @@
 (function () {
   var KEY = 'pvphelper-state-v1';
   var IV_KEY = 'pvphelper-ivs-v1';   // { speciesId: [atk, def, hp] } the viewer entered
-  var LEAGUES = ['great', 'ultra', 'master', 'fantasy'];
+  // Formats on offer (data/formats.js, from the GO Battle League schedule): the open leagues always,
+  // plus cups that are live now or start within UPCOMING_DAYS, by the viewer's clock.
+  var UPCOMING_DAYS = 7;
+  var NOW = Date.now();
+  var FORMAT_DATA = (window.PvpData && window.PvpData.raw.formats) || { schedule: null, formats: [], other: [] };
+  // Start of a format's current or next week, so cups list live ones first, then by start date.
+  function nextStart(f) {
+    var w = f.weeks.filter(function (w) { return w[1] > NOW; })[0];
+    return w ? w[0] : Infinity;
+  }
+  var FORMATS = FORMAT_DATA.formats.filter(function (f) {
+    return f.cup === 'all' || f.weeks.some(function (w) { return w[1] > NOW && w[0] < NOW + UPCOMING_DAYS * 864e5; });
+  });
+  FORMATS = FORMATS.filter(function (f) { return f.cup === 'all'; }).concat(FORMATS.filter(function (f) { return f.cup !== 'all'; })
+    .sort(function (x, y) { return nextStart(x) - nextStart(y); }));
+  var LEAGUES = FORMATS.map(function (f) { return f.id; });
+  var LEAGUE_NAMES = {}, LEAGUE_CP = {}, LEAGUE_CUP = {};   // LEAGUE_CUP: PvPoke cup id, for links
+  FORMATS.forEach(function (f) { LEAGUE_NAMES[f.id] = f.name; LEAGUE_CP[f.id] = f.cp; LEAGUE_CUP[f.id] = f.cup; });
   var STYLES = ['abc', 'pair', 'any'];
   // Styles that were merged into another; old saved state and shared links still work.
   var STYLE_ALIASES = { abb: 'pair', aba: 'pair' };
-  var LEAGUE_NAMES = { great: 'Great League', ultra: 'Ultra League', master: 'Master League', fantasy: 'Fantasy Cup' };
   // The 'any' value is kept (saved state and shared links use it); only the label changed.
   var STYLE_NAMES = { abc: 'ABC', pair: 'Shared type', any: 'Best score' };
   var STYLE_HINTS = { abc: 'ABC style', pair: 'shared type style (ABB / ABA)', any: 'best score (no typing rule)' };
@@ -19,12 +35,11 @@
     AAA: 'all three share a type'
   };
   var ROLE_NAMES = { lead: 'Lead', swap: 'Safe swap', closer: 'Closer' };
-  var LEAGUE_CP = { great: 1500, ultra: 2500, master: 10000, fantasy: 1500 };
-  var LEAGUE_CUP = { great: 'all', ultra: 'all', master: 'all', fantasy: 'fantasy' };   // PvPoke cup id
   var MAX_MATCHES = 8;
   var QUICK_PICKS = 6;
   var PICK_ID = /^[a-z0-9_]{1,64}$/;   // shape of a PvPoke species id
 
+  var startNotice = '';   // set by load() when a shared link names a format that is over
   var state = load();
   var contexts = {};   // league -> Engine context, built once per league
   var images = {};     // species id -> image stem (data/images.js)
@@ -83,6 +98,9 @@
     var shared = readHash();
     // A shared link replaces the remembered view entirely, including empty slots.
     if (shared) applySaved(s, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected });
+    if (shared && shared.league && LEAGUES.indexOf(shared.league) === -1) {
+      startNotice = 'That link is for a cup that is no longer in GO Battle League, so it opened in ' + LEAGUE_NAMES[s.league] + '.';
+    }
     return s;
   }
 
@@ -160,7 +178,7 @@
   function contextFor(league) {
     return Promise.all([window.PvpData.gamemaster(), window.PvpData.rankings(league), window.PvpData.images()]).then(function (data) {
       images = data[2];
-      if (!contexts[league]) contexts[league] = window.Engine.createContext(data[0], data[1], league);
+      if (!contexts[league]) contexts[league] = window.Engine.createContext(data[0], data[1], LEAGUE_CP[league]);
       return contexts[league];
     });
   }
@@ -439,7 +457,7 @@
   function ivResult(id, ivs) {
     if (!ivs) return 'Enter Attack, Defense and HP (0–15).';
     var ctx = contexts[state.league];
-    var r = window.Engine.ivCheck(ctx.byId[id].pokemon, state.league, ivs);
+    var r = window.Engine.ivCheck(ctx.byId[id].pokemon, LEAGUE_CP[state.league], ivs);
     if (!r) return 'These IVs can’t get under the ' + LEAGUE_NAMES[state.league] + ' CP cap.';
     return '<strong>Rank ' + r.rank + '</strong> of ' + r.of + ' · ' + r.percent.toFixed(1) + '% of rank 1' +
       '<br><small>Level ' + r.level + ' · CP ' + r.cp + '</small>';
@@ -450,7 +468,8 @@
       var fast = m.moves[0], charged = m.moves.slice(1);
       function move(mv) {
         return '<li>' + (mv.type ? '<span class="type dot" data-type="' + escapeHtml(mv.type) + '" title="' + escapeHtml(capitalize(mv.type)) + '"></span>' : '') +
-          escapeHtml(mv.name) + (mv.elite ? ' <abbr class="elite" title="Needs an Elite TM or a Community Day">Elite</abbr>' : '') + '</li>';
+          escapeHtml(mv.name) + (mv.elite ? ' <abbr class="elite" title="Needs an Elite TM or a Community Day">Elite</abbr>' : '') +
+          (mv.mega ? ' <abbr class="elite" title="Mega move: a third charged move this Mega has, with bonus damage">Mega</abbr>' : '') + '</li>';
       }
       return '<article class="member">' +
         '<div class="member-head">' + icon(m.id, 64) + '<div>' +
@@ -591,12 +610,56 @@
     runSearch();
   });
 
+  // ---- League picker, from the GO Battle League schedule ----
+
+  function liveWeek(weeks) {
+    for (var i = 0; i < weeks.length; i++) if (weeks[i][0] <= NOW && NOW < weeks[i][1]) return weeks[i];
+    return null;
+  }
+
+  function shortDate(ms) {
+    return new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  function renderLeagueOptions() {
+    document.getElementById('league-options').innerHTML = FORMATS.map(function (f) {
+      var live = liveWeek(f.weeks);
+      var next = live ? null : f.weeks.filter(function (w) { return w[0] > NOW; })[0];
+      var status = live ? '<span class="status live" title="In GO Battle League until ' + escapeHtml(shortDate(live[1])) + '">Live</span>'
+        : f.cup !== 'all' && next ? '<span class="status soon">From ' + escapeHtml(shortDate(next[0])) + '</span>' : '';
+      return '<label' + (f.rules ? ' title="' + escapeHtml(f.rules) + '"' : '') + '><input type="radio" name="league" value="' +
+        escapeHtml(f.id) + '"> ' + escapeHtml(f.name.replace(/ League\b/, '')) + ' <small>' + escapeHtml(f.label) + '</small>' + status + '</label>';
+    }).join('');
+
+    // What's on in GBL this week, including formats the site can't offer yet.
+    var note = document.getElementById('gbl-week');
+    var on = [], until = null;
+    FORMAT_DATA.formats.concat(FORMAT_DATA.other).forEach(function (f) {
+      var w = liveWeek(f.weeks);
+      if (!w) return;
+      until = w[1];
+      on.push(escapeHtml(f.name) + (f.reason ? ' <small>(no public rankings to build from)</small>' : ''));
+    });
+    note.hidden = !on.length;
+    note.innerHTML = on.length ? 'This week in GO Battle League, until ' + escapeHtml(shortDate(until)) + ': ' + on.join(', ') + '.' : '';
+  }
+
   // ---- Form wiring ----
 
   function renderDataDate() {
     window.PvpData.gamemaster().then(function (gm) {
       document.getElementById('data-date').textContent = ', game data of ' + gm.timestamp.slice(0, 10);
     }).catch(function () { /* the results panel reports load errors */ });
+    // How far ahead the schedule is known: if this date passes, the schedule source has gone stale.
+    var schedule = FORMAT_DATA.schedule;
+    if (schedule && /^[\w.-]+\/[\w.-]+$/.test(schedule.source)) {
+      var source = document.getElementById('schedule-source');
+      source.textContent = schedule.source;
+      source.href = 'https://github.com/' + schedule.source;
+      document.getElementById('schedule-end').textContent = ', known through ' +
+        new Date(schedule.end).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      document.getElementById('schedule-credit').hidden = false;
+    }
   }
 
   function syncRadios() {
@@ -640,6 +703,7 @@
     select.addEventListener('change', function () { window.Theme.set(select.value); });
   }
 
+  renderLeagueOptions();
   bindRadios('league', 'league', function () { syncCombos(); renderQuickPicks(); runSearch(); renderTopTeams(); });
   bindRadios('style', 'style', function () { runSearch(); });
   bindTheme();
@@ -648,6 +712,6 @@
   if (location.hash && hashFor(state) && location.hash !== hashFor(state)) {
     history.replaceState(null, '', hashFor(state));
   }
-  runSearch();
+  runSearch(startNotice);
   renderTopTeams();
 })();

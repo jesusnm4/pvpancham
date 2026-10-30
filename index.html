@@ -31,12 +31,9 @@
     <section class="panel">
       <fieldset>
         <legend>League or cup</legend>
-        <div class="segmented">
-          <label><input type="radio" name="league" value="great"> Great <small>1500</small></label>
-          <label><input type="radio" name="league" value="ultra"> Ultra <small>2500</small></label>
-          <label><input type="radio" name="league" value="master"> Master <small>no cap</small></label>
-          <label title="1,500 CP cap. Only Dragon, Steel and Fairy types are eligible."><input type="radio" name="league" value="fantasy"> Fantasy Cup <small>Dragon · Steel · Fairy</small></label>
-        </div>
+        <!-- Filled from data/formats.js: the open leagues plus cups in the GO Battle League schedule. -->
+        <div class="segmented" id="league-options"></div>
+        <p class="hint gbl-week" id="gbl-week" hidden></p>
       </fieldset>
 
       <fieldset>
@@ -82,10 +79,12 @@
 
   <footer class="site-footer">
     Data and rankings from <a href="https://pvpoke.com">PvPoke</a> (MIT License)<span id="data-date"></span>.
+    <span id="schedule-credit" hidden>GO Battle League schedule from the Pokémon GO game master via <a id="schedule-source" href="#"></a><span id="schedule-end"></span>.</span>
     Pokémon images from Pokémon GO via <a href="https://github.com/PokeMiners/pogo_assets">PokeMiners</a>, © Niantic and The Pokémon Company.
     Unofficial fan project; Pokémon and Pokémon GO are trademarks of their respective owners.
   </footer>
 
+  <script src="data/formats.js"></script>
   <script src="js/data.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/app.js"></script>

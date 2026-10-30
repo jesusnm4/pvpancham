@@ -9,10 +9,14 @@ var vm = require('vm');
 var root = path.join(__dirname, '..');
 globalThis.window = globalThis;
 
-['data/gamemaster.js', 'data/rankings-great.js', 'data/rankings-ultra.js', 'data/rankings-master.js', 'data/rankings-fantasy.js',
-  'js/engine.js', 'js/engine.test.js'].forEach(function (file) {
+function load(file) {
   vm.runInThisContext(fs.readFileSync(path.join(root, file), 'utf8'), { filename: file });
-});
+}
+// The formats on offer (and so the rankings files) come from data/formats.js.
+load('data/formats.js');
+var formats = window.PvpData.raw.formats.formats;
+['data/gamemaster.js'].concat(formats.map(function (f) { return 'data/rankings-' + f.id + '.js'; }),
+  ['js/engine.js', 'js/engine.test.js']).forEach(load);
 
 var results = window.EngineTests.results;
 
@@ -27,11 +31,11 @@ var results = window.EngineTests.results;
   var map = window.PvpData.raw.images.map;
   // Only the top 100 must have icons: a brand-new Pokémon lower down without an icon yet should not
   // block the weekly data refresh (it just shows without an image), but it is listed.
-  ['great', 'ultra', 'master', 'fantasy'].forEach(function (league) {
-    var unmapped = window.PvpData.raw['rankings-' + league].map(function (r, i) { return { id: r.id, rank: i + 1 }; })
+  formats.forEach(function (f) {
+    var unmapped = window.PvpData.raw['rankings-' + f.id].map(function (r, i) { return { id: r.id, rank: i + 1 }; })
       .filter(function (r) { return !map[r.id]; });
     var top = unmapped.filter(function (r) { return r.rank <= 100; });
-    results.push({ name: 'images: every top-100 ' + league + ' league Pokémon has an icon', pass: !top.length,
+    results.push({ name: 'images: every top-100 ' + f.name + ' Pokémon has an icon', pass: !top.length,
       detail: unmapped.length ? 'without icon: ' + unmapped.slice(0, 10).map(function (r) { return r.id + ' #' + r.rank; }).join(', ') : '' });
   });
   var stems = Object.keys(map).map(function (id) { return map[id]; });

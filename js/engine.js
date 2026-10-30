@@ -14,9 +14,22 @@
   var SHADOW_DEF = 0.83333331;
   var MAX_ENERGY = 100;
   var LEVEL_CAP = 50;
+  // Megas (PvPoke's Pokemon.js and DamageCalculator.js): a Mega's "+" charged move (isMegaMove)
+  // does extra damage by Mega level, which is 3 for Megas and 4 for "supermega" ones; those also
+  // power up to level 52.
+  var MEGA_BONUS = [1, 1.10000002384185791015625, 1.2000000476837158203125, 1.2999999523162841796875];
+  var SUPER_MEGA_LEVEL_CAP = 52;
 
-  // Format id -> CP cap. Cups (fantasy) are formats too: same math, their own rankings.
-  var LEAGUES = { great: 1500, ultra: 2500, master: 10000, fantasy: 1500 };
+  // The open leagues' CP caps. Engine functions take a `league` that is either one of these ids
+  // or a CP cap (a number): cups come from data/formats.js and are passed by their cap.
+  var LEAGUES = { great: 1500, ultra: 2500, master: 10000 };
+  var NO_CAP = 10000;   // a cap this high means Master League rules: max IVs at the level cap
+
+  function capOf(league) {
+    var cap = typeof league === 'number' ? league : LEAGUES[league];
+    if (!cap) throw new Error('Unknown league: ' + league);
+    return cap;
+  }
 
   // CP multiplier per half level, starting at level 1 (index = (level - 1) * 2).
   var CPM = [0.0939999967813491, 0.135137430784308, 0.166397869586944, 0.192650914456886, 0.215732470154762, 0.236572655026622, 0.255720049142837, 0.273530381100769, 0.290249884128570, 0.306057381335773, 0.321087598800659, 0.335445032295077, 0.349212676286697, 0.362457748778790, 0.375235587358474, 0.387592411085168, 0.399567276239395, 0.411193549517250, 0.422500014305114, 0.432926413410414, 0.443107545375824, 0.453059953871985, 0.462798386812210, 0.472336077786704, 0.481684952974319, 0.490855810259008, 0.499858438968658, 0.508701756943992, 0.517393946647644, 0.525942508771329, 0.534354329109191, 0.542635762230353, 0.550792694091796, 0.558830599438087, 0.566754519939422, 0.574569148039264, 0.582278907299041, 0.589887911977272, 0.597400009632110, 0.604823657502073, 0.612157285213470, 0.619404110566050, 0.626567125320434, 0.633649181622743, 0.640652954578399, 0.647580963301656, 0.654435634613037, 0.661219263506722, 0.667934000492096, 0.674581899290818, 0.681164920330047, 0.687684905887771, 0.694143652915954, 0.700542893277978, 0.706884205341339, 0.713169102333341, 0.719399094581604, 0.725575616972598, 0.731700003147125, 0.734741011137376, 0.737769484519958, 0.740785574597326, 0.743789434432983, 0.746781208702482, 0.749761044979095, 0.752729105305821, 0.755685508251190, 0.758630366519684, 0.761563837528228, 0.764486065255226, 0.767397165298461, 0.770297273971590, 0.773186504840850, 0.776064945942412, 0.778932750225067, 0.781790064808426, 0.784636974334716, 0.787473583646825, 0.790300011634826, 0.792803950958807, 0.795300006866455, 0.797803921486970, 0.800300002098083, 0.802803892322847, 0.805299997329711, 0.807803863460723, 0.810299992561340, 0.812803834895026, 0.815299987792968, 0.817803806620319, 0.820299983024597, 0.822803778631297, 0.825299978256225, 0.827803750922782, 0.830299973487854, 0.832803753381377, 0.835300028324127, 0.837803755931569, 0.840300023555755, 0.842803729034748, 0.845300018787384, 0.847803702398935, 0.850300014019012, 0.852803676019539, 0.855300009250640, 0.857803649892077, 0.860300004482269, 0.862803624012168, 0.865299999713897];
@@ -93,6 +106,14 @@
     return !!(pokemon.tags && pokemon.tags.indexOf(tag) !== -1);
   }
 
+  function levelCap(pokemon) {
+    return hasTag(pokemon, 'supermega') ? SUPER_MEGA_LEVEL_CAP : LEVEL_CAP;
+  }
+
+  function megaLevel(pokemon) {
+    return hasTag(pokemon, 'mega') ? (hasTag(pokemon, 'supermega') ? 4 : 3) : 0;
+  }
+
   // Lowest IV obtainable, following PvPoke: traded legendaries floor at 1, shadow legendaries at
   // 6, untradeable Pokémon (raid or research only) at 10.
   function ivFloor(pokemon) {
@@ -103,10 +124,10 @@
     return 0;
   }
 
-  // Highest level at or below LEVEL_CAP whose CP fits under cap, or -1 if even the floor level
+  // Highest level at or below maxLevel whose CP fits under cap, or -1 if even the floor level
   // does not fit. Binary search over the CPM table (CP rises monotonically with level).
-  function maxLevelIndex(baseStats, ivs, cap, minIndex) {
-    var lo = minIndex, hi = (LEVEL_CAP - 1) * 2;
+  function maxLevelIndex(baseStats, ivs, cap, minIndex, maxLevel) {
+    var lo = minIndex, hi = (maxLevel - 1) * 2;
     if (cpFor(baseStats, ivs, CPM[lo]) > cap) return -1;
     while (lo < hi) {
       var mid = (lo + hi + 1) >> 1;
@@ -135,7 +156,7 @@
       for (var d = floor; d <= 15; d++) {
         for (var h = floor; h <= 15; h++) {
           var ivs = [a, d, h];
-          var idx = maxLevelIndex(base, ivs, cap, minIndex);
+          var idx = maxLevelIndex(base, ivs, cap, minIndex, levelCap(pokemon));
           if (idx < 0) continue;
           var cpm = CPM[idx];
           var s = statsAt(base, ivs, cpm);
@@ -164,11 +185,12 @@
     })) {
       throw new Error('IVs must be three whole numbers from 0 to 15');
     }
-    var key = pokemon.id + '@' + league;
-    if (!rankingCache[key]) rankingCache[key] = ivRanking(pokemon, LEAGUES[league]);
+    var cap = capOf(league);
+    var key = pokemon.id + '@' + cap;
+    if (!rankingCache[key]) rankingCache[key] = ivRanking(pokemon, cap);
     var ranking = rankingCache[key];
     var minIndex = pokemon.levelFloor ? Math.round((pokemon.levelFloor - 1) * 2) : 0;
-    var idx = maxLevelIndex(pokemon.stats, ivs, LEAGUES[league], minIndex);
+    var idx = maxLevelIndex(pokemon.stats, ivs, cap, minIndex, levelCap(pokemon));
     if (idx < 0 || !ranking.length) return null;
     var cpm = CPM[idx];
     var st = statsAt(pokemon.stats, ivs, cpm);
@@ -188,15 +210,16 @@
 
   // The rank-1 spread for this Pokémon in a league, or null if it cannot fit under the cap.
   function rankOne(pokemon, league) {
-    var key = pokemon.id + '@' + league;
+    var cap = capOf(league);
+    var key = pokemon.id + '@' + cap;
     if (!(key in rankOneCache)) {
-      var cap = LEAGUES[league];
-      if (league === 'master') {
+      if (cap >= NO_CAP) {
         // No cap: max IVs at the level cap is always rank 1.
         var ivs = [15, 15, 15];
-        var cpm = cpmAt(LEVEL_CAP);
+        var top = levelCap(pokemon);
+        var cpm = cpmAt(top);
         var s = statsAt(pokemon.stats, ivs, cpm);
-        rankOneCache[key] = { ivs: ivs, level: LEVEL_CAP, cp: cpFor(pokemon.stats, ivs, cpm),
+        rankOneCache[key] = { ivs: ivs, level: top, cp: cpFor(pokemon.stats, ivs, cpm),
           atk: s.atk, def: s.def, hp: s.hp, statProduct: s.atk * s.def * s.hp };
       } else {
         rankOneCache[key] = ivRanking(pokemon, cap)[0] || null;
@@ -225,6 +248,7 @@
       fast: fast,
       charged: charged,
       stages: pokemon.nativeStatBuffs || [0, 0],
+      megaLevel: megaLevel(pokemon),
       ability: abilityOf(pokemon, movesById)
     };
   }
@@ -255,8 +279,9 @@
   // Damage before the floor and +1, so buff stages can be applied on top at battle time.
   function damageCoefficient(attacker, defender, move) {
     var stab = attacker.types.indexOf(move.type) !== -1 ? STAB : 1;
+    var mega = attacker.megaLevel && move.isMegaMove ? MEGA_BONUS[attacker.megaLevel - 1] : 1;
     return move.power * stab * (attacker.atk / defender.def) *
-      effectiveness(move.type, defender.types) * 0.5 * BONUS;
+      effectiveness(move.type, defender.types) * mega * 0.5 * BONUS;
   }
 
   // Stat stage multiplier (stages run -4..+4), as in the game and PvPoke.
@@ -639,7 +664,8 @@
         rankedCount: ctx.ranked.length,
         moves: e.ranking.moveset.map(function (id) {
           var m = gm.movesById[id];
-          return { id: id, name: m ? m.name : id, type: m ? m.type : null, elite: !!(e.pokemon.elite && e.pokemon.elite.indexOf(id) !== -1) };
+          return { id: id, name: m ? m.name : id, type: m ? m.type : null, elite: !!(e.pokemon.elite && e.pokemon.elite.indexOf(id) !== -1),
+            mega: !!(m && m.isMegaMove) };
         }),
         ivs: { atk: r1.ivs[0], def: r1.ivs[1], hp: r1.ivs[2], level: r1.level, cp: r1.cp }
       };

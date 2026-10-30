@@ -110,6 +110,12 @@
 
     var tooBig = mon('big', ['normal'], [500, 500, 500], { levelFloor: 20 });
     eq('Pokémon that cannot fit the cap has no rank 1', E.rankOne(tooBig, 'great'), null);
+
+    // Cups are passed by their CP cap.
+    eq('a CP cap works like the league id', E.rankOne(altaria, 1500), E.rankOne(altaria, 'great'));
+    eq('a no-cap number works like Master League', E.rankOne(mon('mewtwo', ['psychic'], [300, 182, 214]), 10000).ivs, [15, 15, 15]);
+    ok('a 500 CP cup fits under its cap', E.rankOne(altaria, 500).cp <= 500, E.rankOne(altaria, 500).cp);
+    throws('an unknown league id is rejected', function () { E.rankOne(altaria, 'fantasy'); });
   });
 
   // ---- Battle ----
@@ -122,6 +128,27 @@
     // floor(10 * 1 * 1.6 * 0.5 * 1.3) + 1 = floor(10.4) + 1
     eq('super-effective non-STAB hit', E.damage(a, b, { type: 'water', power: 10 }), 11);
     eq('minimum damage is 1', E.damage(a, { types: ['ghost'], def: 100 }, { type: 'normal', power: 1 }), 1);
+  });
+
+  test('Megas', function () {
+    var plus = { moveId: 'BLAST_PLUS', type: 'fire', power: 100, energy: 50, energyGain: 0, isMegaMove: true };
+    var target = { types: ['normal'], def: 100 };
+    // floor(100 * 1 * 0.5 * 1.3 * bonus) + 1, bonus by Mega level: 3 -> 1.2, 4 -> 1.3. The game's
+    // 1.3 is 1.29999995, so the plain hit floors 64.99... to 64.
+    eq('no bonus for a non-Mega', E.damage({ types: ['normal'], atk: 100, megaLevel: 0 }, target, plus), 65);
+    eq('Mega move: x1.2 at Mega level 3', E.damage({ types: ['normal'], atk: 100, megaLevel: 3 }, target, plus), 79);
+    eq('Mega move: x1.3 at Mega level 4', E.damage({ types: ['normal'], atk: 100, megaLevel: 4 }, target, plus), 85);
+    var ordinary = { type: 'fire', power: 100 };
+    eq('ordinary moves get no Mega bonus', E.damage({ types: ['normal'], atk: 100, megaLevel: 4 }, target, ordinary), 65);
+
+    var mega = mon('mega', ['normal'], [300, 182, 214], { tags: ['mega'] });
+    var superMega = mon('super', ['normal'], [300, 182, 214], { tags: ['mega', 'supermega'] });
+    eq('Megas battle at Mega level 3', battler(mega, ['TACKLE', 'BLAST']).megaLevel, 3);
+    eq('supermegas battle at Mega level 4', battler(superMega, ['TACKLE', 'BLAST']).megaLevel, 4);
+    eq('Megas cap at level 50 in Master League', E.rankOne(mega, 'master').level, 50);
+    eq('supermegas reach level 52 in Master League', E.rankOne(superMega, 'master').level, 52);
+    var small = mon('small', ['normal'], [90, 90, 90], { tags: ['mega', 'supermega'] });
+    ok('supermegas can go past level 50 under a CP cap', E.rankOne(small, 'great').level > 50, E.rankOne(small, 'great').level);
   });
 
   test('simulator', function () {
@@ -218,12 +245,31 @@
     return map;
   }
   var gm = { pokemonById: index(raw.gamemaster.pokemon, 'id'), movesById: index(raw.gamemaster.moves, 'moveId') };
+  // Formats on offer, from data/formats.js (the open leagues plus any cup in the GBL schedule).
+  var formats = raw.formats.formats;
 
-  ['great', 'ultra', 'master', 'fantasy'].forEach(function (league) {
-    test(league + ' league with real data', function () {
-      var ctx = E.createContext(gm, raw['rankings-' + league], league);
-      var cap = E.LEAGUES[league];
-      eq(league + ': 100 threats', ctx.threats.length, 100);
+  test('formats data', function () {
+    eq('the open leagues come first', formats.slice(0, 3).map(function (f) { return [f.id, f.cp, f.cup]; }),
+      [['great', 1500, 'all'], ['ultra', 2500, 'all'], ['master', 10000, 'all']]);
+    ok('format ids are safe file and hash names', formats.every(function (f) { return /^[a-z0-9_]{1,32}$/.test(f.id); }));
+    ok('every format has a name, label and CP cap', formats.every(function (f) { return f.name && f.label && f.cp > 0; }));
+    ok('weeks run forwards', formats.concat(raw.formats.other).every(function (f) {
+      return f.weeks.every(function (w) { return w[0] < w[1]; });
+    }));
+    ok('every cup is scheduled', formats.slice(3).every(function (f) { return f.weeks.length > 0; }));
+    var sched = raw.formats.schedule;
+    ok('the schedule end covers every week', !sched || formats.concat(raw.formats.other).every(function (f) {
+      return f.weeks.every(function (w) { return w[1] <= sched.end; });
+    }));
+  });
+
+  formats.forEach(function (f) {
+    var league = f.id;
+    test(f.name + ' with real data', function () {
+      var ctx = E.createContext(gm, raw['rankings-' + league], f.cp);
+      var cap = f.cp;
+      // Cups can rank fewer Pokémon than the open leagues' 100-strong meta.
+      ok(league + ': 100 threats', ctx.threats.length === 100 || (f.cup !== 'all' && ctx.threats.length >= 30), ctx.threats.length);
 
       var pick = ctx.ranked[0].id;
       var teams = E.suggest(ctx, [pick], 'abc', 5);
@@ -263,11 +309,13 @@
     });
   });
 
-  test('fantasy cup only ranks Dragon, Steel and Fairy types', function () {
-    var bad = raw['rankings-fantasy'].filter(function (r) {
-      return !gm.pokemonById[r.id].types.some(function (t) { return ['dragon', 'steel', 'fairy'].indexOf(t) !== -1; });
+  formats.filter(function (f) { return f.types; }).forEach(function (f) {
+    test(f.name + ' only ranks ' + f.types.join(', ') + ' types', function () {
+      var bad = raw['rankings-' + f.id].filter(function (r) {
+        return !gm.pokemonById[r.id].types.some(function (t) { return f.types.indexOf(t) !== -1; });
+      });
+      eq(f.id + ': every ranked Pokémon is eligible', bad.map(function (r) { return r.id; }), []);
     });
-    eq('every ranked Pokémon is eligible', bad.map(function (r) { return r.id; }), []);
   });
 
   test('best teams with no picks (great league, every style)', function () {
@@ -290,9 +338,10 @@
   // The banner shows each format's best-score teams and opens one by picking its lead and safe
   // swap, keeping the viewer's style if the team fits it (else Best score); the team must be
   // among those results.
-  ['great', 'ultra', 'master', 'fantasy'].forEach(function (league) {
+  formats.forEach(function (f) {
+    var league = f.id;
     test(league + ': top teams banner', function () {
-      var ctx = E.createContext(gm, raw['rankings-' + league], league);
+      var ctx = E.createContext(gm, raw['rankings-' + league], f.cp);
       var teams = E.bestTeams(ctx, 'any', 3);
       eq(league + ': three banner teams', teams.length, 3);
       teams.forEach(function (t, i) {

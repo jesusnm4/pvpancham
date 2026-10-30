@@ -8,7 +8,8 @@ team gets its top 3 strengths and top 3 weaknesses against the current meta.
 
 - **Static site on GitHub Pages.** No backend and no build step: plain HTML, CSS and JS, deployed
   from `main` as-is. If a feature ever needs a server, we flag it before building it.
-- **All three open leagues:** Great (1500 CP), Ultra (2500 CP), Master (no cap).
+- **All three open leagues:** Great (1500 CP), Ultra (2500 CP), Master (no cap), always; plus the
+  cups in the current GO Battle League schedule.
 
 ## Data: PvPoke snapshot
 
@@ -19,14 +20,42 @@ team gets its top 3 strengths and top 3 weaknesses against the current meta.
 | `src/data/gamemaster.min.json` | base stats, types, movepools, elite/legacy moves, move data, shadow forms |
 | `src/data/rankings/all/overall/rankings-{1500,2500,10000}.json` | overall score, recommended moveset, role sub-scores (lead, closer, switch, charger, attacker, consistency), top 5 matchups and counters |
 
-A scheduled GitHub Action (weekly, plus a manual trigger) runs `scripts/update_data.py`, which
+A scheduled GitHub Action (daily, plus Tuesdays before the GBL week changes, plus a manual trigger)
+runs `scripts/update_data.py`, which
 downloads these, trims them to the fields we use, and commits the result to `data/` (about 1.2 MB,
 ~200 KB gzipped). The site reads only its own copy, so it never depends on a third-party site being
 up. PvPoke is credited in the README and the page footer.
 
 The snapshot is written as `.js` files that assign into `window.PvpData.raw`, loaded with script
-tags, because browsers block `fetch()` of local files under `file://`. Megas (not allowed in GO
-Battle League) and unreleased Pokémon are dropped.
+tags, because browsers block `fetch()` of local files under `file://`. Unreleased Pokémon are
+dropped. Megas are kept: PvPoke models each as its own Pokémon (`charizard_mega_y`, tag `mega`)
+with its Mega stats and the base form's Pokédex number. The open leagues' rankings contain none.
+
+## Data: GO Battle League schedule
+
+PvPoke has no schedule (its `formats` list has no dates and mixes GBL cups with community
+tournaments). Pokémon GO's own game master has it: `VS_SEEKER_SCHEDULE_SETTINGS` lists every week
+of the season (start and end time, and the league ids on, e.g. `COMBAT_LEAGUE_VS_SEEKER_GREAT_FANTASY`),
+about two months ahead, and each league's template has its CP cap, allowed types and whether Megas
+are allowed. Dataminers publish the game master on GitHub; `update_data.py` reads every mirror in
+`GAME_MASTERS` and keeps the schedule that reaches furthest (PokeMiners stopped updating in August
+2026; alexelgt updates almost daily). If none can be read it keeps the previous schedule.
+
+Game leagues are matched to PvPoke rankings by hand (`GBL_LEAGUES`). Automatic matching was tried
+on season 24's 14 leagues and got 7 right, 6 unmatched and one wrong with full confidence: the game
+stores Master League as 6000 CP and Master Megas as 9999, PvPoke's format list omits cups it still
+ranks (Retro, Willpower, Color), and Catch Cup has the same CP and open typing as PvPoke's general
+Mega format. The same matcher now only suggests a cup in the warning for an unmapped league.
+
+`data/formats.js` holds the open leagues and every mapped cup with a week not yet over, each with
+its weeks, plus `other`: scheduled leagues the site can't offer (no public rankings). The
+page decides by the viewer's clock, so cups appear and expire on time between refreshes.
+
+**Keeping up to date.** PvPoke publishes cup rankings close to the start (Mega Halloween Cup's
+landed 22 hours before it began), so the refresh runs daily, plus Tuesdays at 18:17 UTC. Warnings
+that need a person open a "Data refresh needs attention" issue (`scripts/report_warnings.sh`),
+which emails the owner, changes only when the warnings do, and closes after a clean run. The
+footer shows how far ahead the schedule is known, so a stale mirror is visible on the page.
 
 Rank-1 IVs are computed by the engine from base stats and the CP multiplier table, not taken from
 PvPoke's `defaultIVs`, which are not always the rank-1 spread.
@@ -44,12 +73,19 @@ All in `js/engine.js`, pure and DOM-free.
    with the game's damage formula and turn timing. Policy: bait with the cheapest charged move
    while the opponent has shields, otherwise wait for the best damage-per-energy move unless a
    cheaper one knocks out or this side is about to faint; defenders always shield. Guaranteed stat
-   buffs, Mimikyu's Disguise and Cramorant's Gulp Missile are modelled. The rating is PvPoke's
-   battle rating (500 = even, 1000 = flawless win), averaged over 0-0, 1-1 and 2-2 shields.
+   buffs, Mimikyu's Disguise and Cramorant's Gulp Missile are modelled. Megas follow PvPoke: some
+   ("supermega", e.g. Mewtwo X/Y, Dragonite) have a "+" Mega move as a third charged move, which
+   gets ×1.2 damage at Mega level 3 and ×1.3 at level 4 (supermegas), and supermegas power up to
+   level 52. The game sets no per-team Mega limit. The rating is PvPoke's battle rating (500 =
+   even, 1000 = flawless win), averaged over 0-0, 1-1 and 2-2 shields.
 
    Checked against the top 5 wins and losses PvPoke lists for each of the top 100 Pokémon (its
-   1-1 shield results): the simulator picks the same winner **84%** of the time in Great and Ultra
-   League, with an average gap of 62–74 rating points. Known gaps: chance-based buffs, Aegislash
+   1-1 shield results, `scripts/check-agreement.js`): the simulator picks the same winner **84%**
+   of the time in Great and Ultra League and **91%** in Master League, with an average gap of
+   60–74 rating points. Mega formats: 84% (Great, Ultra), 92% (Master), 88% (Mega Halloween Cup);
+   battles involving a Mega agree 81–92%. Modelling the Mega move bonus and level 52 raised
+   Master League (Megas) from 90.8% to 92.2% (Mega battles 90.0% → 91.8%). Fantasy Cup was 90%
+   while it ran. Known gaps: chance-based buffs, Aegislash
    and Morpeko form changes, and PvPoke's smarter shielding and baiting decisions.
 4. **Team score:** for each threat, the chance the team's best answer wins (a smooth curve over
    the rating), weighted by the threat's rank; plus 0.2× the same for the second-best answer
@@ -124,14 +160,19 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
    "check my IVs" input on each team card (rank among all spreads, % of rank-1 stat product, level
    and CP), scroll-to-results and larger tap targets on phones. ✅
 6. **Pokémon images:** Pokémon GO icons copied into `img/pokemon/` (trimmed, 128 px WebP) by
-   `scripts/update_images.py`, refreshed by the weekly Action; shown in team cards, the team list,
+   `scripts/update_images.py`, refreshed by the daily Action; shown in team cards, the team list,
    search results and threat lists, with a purple glow for shadows. ✅
 7. **Fantasy Cup:** PvPoke cup `fantasy` (1,500 CP, Dragon / Steel / Fairy only) as a fourth
    format next to the leagues. Same engine; its own rankings file. Simulator agreement with
    PvPoke's listed 1-1 results: 90%. ✅
 8. **Top teams banner:** the best three teams overall for the selected league or cup, with no
    picks (`Engine.bestTeams`, Best score whatever the selected style), shown above the pickers. ✅
-9. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
+9. **GO Battle League schedule:** formats from the game master's GBL schedule (`data/formats.js`):
+   cups appear a week ahead, are tagged Live while on and go when over; a note lists this week's
+   GBL leagues. Fantasy Cup ended Oct 27 and left the site this way. ✅
+10. **Megas:** Mega Pokémon kept in the snapshot (with icons), the GBL formats that allow them
+   offered like any cup, and PvPoke's Mega rules in the simulator (Mega move bonus, level 52). ✅
+11. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
    shielding), and limited-format cups.
 
 ## Research: Pokémon images
@@ -151,7 +192,7 @@ we remove the images; nothing else depends on them).
 **Decision:** copy the icons into this repo (first option below).
 
 **Hosting options (PokeMiners):**
-- **Copy the ~560 icons we need into this repo, downscaled**, refreshed by the weekly data Action.
+- **Copy the ~560 icons we need into this repo, downscaled**, refreshed by the data Action.
   Keeps the "no third-party URLs at runtime" rule, works offline and over `file://`, a few MB.
 - **Hotlink `raw.githubusercontent.com`.** Zero setup, but GitHub discourages using raw URLs as a
   CDN (5-minute cache, rate limits), and a repo reorganisation would break images.
