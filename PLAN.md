@@ -192,7 +192,10 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
       tinted win / toss-up / loss by the team's best matchup (`describeTeam().meta`); tap one for
       the member that answers it. The accent follows the league (Great blue, Ultra gold, Master
       purple, cups slate), every accent at 4.5:1 or better. ✅
-   4. *Polish,* then a fresh critique.
+   4. *Polish:* closest matchups and shared weaknesses replace the strengths/weaknesses lists;
+      one focus, press and hover layer; browser parts in the accent; Mega tags filled, Elite
+      outlined; results stay visible, dimmed, during a new search; `?v=` on the site's own
+      files so a cached old script never mixes with a new one. ✅
 13. **Piloting advice:** a short, plain note per team on how to play it (lead, when to swap, what
    to save shields for), generated from its roles, moves and matchups. Wording to be decided.
 14. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter

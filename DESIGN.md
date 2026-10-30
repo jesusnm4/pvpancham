@@ -118,7 +118,7 @@ components:
 
 # Design System: PvP Team Helper
 
-<!-- Recorded from the code at 2d8bc5c and updated through design phase 3 (meta grid, league accents) in
+<!-- Recorded from the code at 2d8bc5c and updated through design phase 4 (polish) in
      PLAN.md. Update this file as each phase lands. -->
 
 ## Overview
@@ -290,7 +290,24 @@ reduced motion.
 definition list of moves (Elite and Mega tags), IVs, and a collapsible "Check your IVs".
 
 ### Report
-Strengths and weaknesses as lists of 32px icons with name, verdict and a small note.
+Under the member cards, two columns (one on phones): **Closest matchups**, the three top-30
+threats with the team's lowest best rating (32px icon, name, types, best answer and verdict), and
+**Shared weaknesses**, the types that hit two or more members super-effectively. The grid covers
+the rest, so there is no separate strengths list.
+
+### Move tags
+Elite (needs an Elite TM or Community Day) is outlined in the accent; Mega (a bonus third charged
+move) is filled with it. Both 12px, 600, 4px corners.
+
+### Interaction layer
+- **Focus:** every button, summary, link and select gets a 2px accent outline, 2px offset.
+- **Press:** chips, league and style labels, team rows and top teams scale to 0.97 (grid cells
+  0.95) over 120ms on `cubic-bezier(0.23, 1, 0.32, 1)`; nothing moves with reduced motion.
+- **Hover:** border turns to the accent, only under `(hover: hover)` so taps don't stick.
+- **Busy:** a new search dims the current results to 50% (150ms) with `aria-busy` until the new
+  teams replace them; the "Finding…" message only shows when nothing is on screen yet.
+- **Browser parts:** `accent-color`, caret, `::selection` (28% accent), disclosure markers and the
+  dropdown scrollbar take the league accent; links underline 2px below the text.
 
 ## Do's and Don'ts
 

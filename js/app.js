@@ -365,7 +365,13 @@
 
   function resultsEl() { return document.getElementById('results'); }
 
+  function notBusy() {
+    resultsEl().classList.remove('busy');
+    resultsEl().removeAttribute('aria-busy');
+  }
+
   function showMessage(html, cls) {
+    notBusy();
     resultsEl().hidden = false;
     resultsEl().innerHTML = '<p class="' + (cls || 'placeholder') + '">' + html + '</p>';
   }
@@ -390,10 +396,16 @@
         described = [];
         // Nothing to show yet: the top teams below the form are the starting point.
         if (notice) showMessage(escapeHtml(notice), 'notice');
-        else { resultsEl().hidden = true; resultsEl().innerHTML = ''; }
+        else { notBusy(); resultsEl().hidden = true; resultsEl().innerHTML = ''; }
         return;
       }
-      showMessage('Finding the best teams…');
+      // Keep the current teams on screen, dimmed, while the new ones are found; else say so.
+      if (resultsEl().querySelector('.team-list')) {
+        resultsEl().classList.add('busy');
+        resultsEl().setAttribute('aria-busy', 'true');
+      } else {
+        showMessage('Finding the best teams…');
+      }
       // Let the message paint before the search blocks the main thread (up to about a second).
       setTimeout(function () {
         if (id !== runId) return;
@@ -437,6 +449,7 @@
         '<span class="team-score" title="Team score out of 100">' + d.displayScore + '</span></button></li>';
     }).join('');
 
+    notBusy();
     resultsEl().hidden = false;
     resultsEl().innerHTML =
       (notice ? '<p class="notice">' + escapeHtml(notice) + '</p>' : '') +
@@ -484,7 +497,7 @@
       function move(mv) {
         return '<li>' + (mv.type ? '<span class="type dot" data-type="' + escapeHtml(mv.type) + '" title="' + escapeHtml(capitalize(mv.type)) + '"></span>' : '') +
           escapeHtml(mv.name) + (mv.elite ? ' <abbr class="elite" title="Needs an Elite TM or a Community Day">Elite</abbr>' : '') +
-          (mv.mega ? ' <abbr class="elite" title="Mega move: a third charged move this Mega has, with bonus damage">Mega</abbr>' : '') + '</li>';
+          (mv.mega ? ' <abbr class="elite mega" title="Mega move: a third charged move this Mega has, with bonus damage">Mega</abbr>' : '') + '</li>';
       }
       return '<article class="member">' +
         '<div class="member-head">' + icon(m.id, 64) + '<div>' +
@@ -505,16 +518,17 @@
         '</dl>' + ivChecker(m) + '</article>';
     }).join('');
 
-    function threatList(items, strong) {
+    function threatList(items) {
       return '<ol class="threats">' + items.map(function (t) {
         return '<li>' + icon(t.id, 32) + '<div><span class="threat-name">' + escapeHtml(t.name) + '</span> ' + typeChips(t.types) +
-          '<br><small>' + (strong ? escapeHtml(t.answer) + ': ' : 'Best answer ' + escapeHtml(t.answer) + ': ') +
+          '<br><small>Best answer ' + escapeHtml(t.answer) + ': ' +
           '<span class="verdict" title="Battle rating ' + t.rating + ' (500 is even)">' + verdict(t.rating) + '</span></small></div></li>';
       }).join('') + '</ol>';
     }
 
     var shared = d.sharedWeaknesses.length
-      ? '<p class="shared">Shared weaknesses: ' + d.sharedWeaknesses.map(function (w) {
+      ? '<p class="hint">Types that hit two or more of your Pokémon super-effectively.</p><p class="shared">' +
+        d.sharedWeaknesses.map(function (w) {
           return typeChips([w.type]) + ' <small>hits ' + w.count + '</small>';
         }).join(' ') + '</p>'
       : '<p class="shared">No type hits two members super-effectively.</p>';
@@ -528,9 +542,11 @@
       (layoutNote ? '<p class="hint">' + layoutNote + '</p>' : '') + '</div></div>' +
       metaGrid(d.meta) +
       '<div class="members">' + members + '</div>' +
+      // The grid above shows every top-30 matchup; this names the three closest, which decide games.
       '<div class="report">' +
-      '<section><h3>Top strengths</h3><p class="hint">Top-30 meta threats this team beats most easily.</p>' + threatList(d.strengths, true) + '</section>' +
-      '<section><h3>Top weaknesses</h3><p class="hint">Top-30 meta threats with the team’s closest matchups, even if it still wins them.</p>' + threatList(d.weaknesses, false) + shared + '</section>' +
+      '<section><h3>Closest matchups</h3><p class="hint">The top-30 threats your team has the hardest time with, even if it still wins them.</p>' +
+      threatList(d.weaknesses) + '</section>' +
+      '<section><h3>Shared weaknesses</h3>' + shared + '</section>' +
       '</div>';
   }
 

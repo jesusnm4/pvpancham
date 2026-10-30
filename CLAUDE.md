@@ -38,6 +38,10 @@ milestones live in `PLAN.md`.
 - Design context: `PRODUCT.md` (users, purpose, principles) and `DESIGN.md` (the visual system:
   tokens, components, rules). Keep `DESIGN.md` in step with `styles.css` as the design phases in
   `PLAN.md` land.
+- `index.html` loads the site's own files with `?v=<date>` (`styles.css`, `js/*.js`). Bump it
+  whenever any of them changes, or a browser holding a cached copy can run a new `app.js` against
+  an old `engine.js`. `data/` files are left untagged (refreshed daily, and tolerant of a few
+  minutes of staleness).
 - UI changes: check the page in headless Playwright (installed globally, never in this repo; on
   the user's Mac: `require('/opt/homebrew/lib/node_modules/playwright')`), not
   the user's own Chrome, at desktop and 390px widths, light and dark, over http and `file://`,
