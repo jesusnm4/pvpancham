@@ -41,7 +41,9 @@ milestones live in `PLAN.md`.
   with no console errors.
 - State lives in two places: `localStorage` (`pvphelper-state-v1` for the view,
   `pvphelper-ivs-v1` for IVs the viewer typed, per species) and the URL hash
-  (`#l=&s=&p=&t=`, see `hashFor`/`readHash` in `app.js`). A hash on load wins over saved state.
+  (`#l=&s=&p=&t=&e=`, see `hashFor`/`readHash` in `app.js`; `e=0` means "Use Elite moves" is off,
+  `noElite` in state). A hash on load wins over saved state. Engine contexts are cached per
+  league and Elite TM setting (`contextKey`).
   Any new persisted field goes through `applySaved` validation. Team style values are `abc`,
   `pair`, `any`; retired values (`abb`, `aba`) are mapped in `STYLE_ALIASES` so old links work.
 - Formats come from `data/formats.js`, built by `update_data.py` from the GO Battle League schedule

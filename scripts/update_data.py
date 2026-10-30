@@ -147,8 +147,31 @@ def trim_gamemaster(gm):
     return {"timestamp": gm["timestamp"], "pokemon": pokemon, "moves": moves}
 
 
-def trim_ranking(r):
-    return {
+def without_elite(r, pokemon):
+    """PvPoke's recommended moveset with each Elite TM move (elite or legacy) swapped for the next
+    most-used non-Elite move of the same kind in PvPoke's own move usage, or None if it has none.
+    A Mega's "+" move stays: it is never Elite. Returns None when nothing needs replacing."""
+    elite = set(pokemon.get("elite", []))
+    moveset = [m for m in r["moveset"] if m != "none"]
+    if not elite.intersection(moveset):
+        return None
+    usage = r.get("moves", {})
+    out = list(moveset)
+    for i, move in enumerate(moveset):
+        if move not in elite:
+            continue
+        pool = usage.get("fastMoves" if i == 0 else "chargedMoves", [])
+        for m in sorted(pool, key=lambda m: -(m.get("uses") or 0)):   # some entries have no count
+            if m["moveId"] not in elite and m["moveId"] not in out:
+                out[i] = m["moveId"]
+                break
+        else:
+            return None   # no non-Elite move of this kind: leave the Pokémon on its normal moveset
+    return out
+
+
+def trim_ranking(r, pokemon):
+    out = {
         "id": r["speciesId"],
         "score": r["score"],
         # PvPoke order: lead, closer, switch, charger, attacker, consistency.
@@ -158,11 +181,16 @@ def trim_ranking(r):
         "wins": [[m["opponent"], m["rating"]] for m in r.get("matchups", [])],
         "losses": [[m["opponent"], m["rating"]] for m in r.get("counters", [])],
     }
+    # Moveset for viewers without Elite TMs, only where it differs.
+    alt = without_elite(r, pokemon)
+    if alt:
+        out["noElite"] = alt
+    return out
 
 
-def trim_rankings(rankings, known_ids, minimum):
+def trim_rankings(rankings, pokemon_by_id, minimum):
     """Trimmed entries, or None if there are fewer than `minimum` (upstream looks broken)."""
-    out = [trim_ranking(r) for r in rankings if r["speciesId"] in known_ids]
+    out = [trim_ranking(r, pokemon_by_id[r["speciesId"]]) for r in rankings if r["speciesId"] in pokemon_by_id]
     return out if len(out) >= minimum else None
 
 
@@ -287,7 +315,7 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     raw_gm = fetch_json("gamemaster.min.json")
     gamemaster = trim_gamemaster(raw_gm)
-    known_ids = {p["id"] for p in gamemaster["pokemon"]}
+    pokemon_by_id = {p["id"]: p for p in gamemaster["pokemon"]}
     now = ms_now()
 
     schedule = fetch_schedule()
@@ -314,7 +342,7 @@ def main():
         path = "rankings/%s/overall/rankings-%d.json" % (f["cup"], f["cp"])
         minimum = OPEN_MIN_RANKED if required else CUP_MIN_RANKED
         try:
-            entries = trim_rankings(fetch_json(path), known_ids, minimum)
+            entries = trim_rankings(fetch_json(path), pokemon_by_id, minimum)
         except (urllib.error.HTTPError, ValueError) as e:
             entries, reason = None, str(e)
         else:

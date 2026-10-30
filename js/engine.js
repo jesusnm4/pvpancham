@@ -440,7 +440,9 @@
   // Builds everything the search needs for one league: the ranked Pokémon, the threat list with
   // weights, and a lazily filled matchup matrix. Battlers (rank-1 IV search) are built on first
   // use, since only the top of the rankings and the user's picks are ever simulated.
-  function createContext(gamemaster, rankings, league) {
+  // options.noElite: team members use their moveset without Elite TM moves (ranking.noElite, from
+  // the data script) where they have one; the threats they face keep their usual movesets.
+  function createContext(gamemaster, rankings, league, options) {
     var byId = {};
     var ranked = [];
     rankings.forEach(function (r) {
@@ -453,7 +455,7 @@
     });
     var ctx = {
       league: league, gamemaster: gamemaster, byId: byId, ranked: ranked, threats: [],
-      totalWeight: 0, rows: {}
+      totalWeight: 0, rows: {}, noElite: !!(options && options.noElite)
     };
     for (var i = 0; i < ranked.length && ctx.threats.length < THREAT_COUNT; i++) {
       if (!battlerOf(ctx, ranked[i])) continue;
@@ -472,10 +474,25 @@
     return entry.battler;
   }
 
-  // Matchup ratings of one ranked Pokémon against every threat, cached per context.
+  // The moveset a team member uses in this context.
+  function teamMoveset(ctx, entry) {
+    return (ctx.noElite && entry.ranking.noElite) || entry.ranking.moveset;
+  }
+
+  // A team member ready to battle: the threat battler, unless its team moveset differs.
+  function memberOf(ctx, entry) {
+    if (teamMoveset(ctx, entry) === entry.ranking.moveset) return battlerOf(ctx, entry);
+    if (entry.teamBattler === undefined) {
+      entry.teamBattler = makeBattler(entry.pokemon, teamMoveset(ctx, entry), ctx.league, ctx.gamemaster.movesById);
+    }
+    return entry.teamBattler;
+  }
+
+  // Matchup ratings of one ranked Pokémon (as a team member) against every threat, cached per
+  // context.
   function row(ctx, id) {
     if (!ctx.rows[id]) {
-      var me = battlerOf(ctx, ctx.byId[id]);
+      var me = memberOf(ctx, ctx.byId[id]);
       ctx.rows[id] = ctx.threats.map(function (t) { return matchup(me, t.entry.battler); });
     }
     return ctx.rows[id];
@@ -662,11 +679,14 @@
         rankScore: e.ranking.score,
         rank: e.rank,
         rankedCount: ctx.ranked.length,
-        moves: e.ranking.moveset.map(function (id) {
+        moves: teamMoveset(ctx, e).map(function (id) {
           var m = gm.movesById[id];
           return { id: id, name: m ? m.name : id, type: m ? m.type : null, elite: !!(e.pokemon.elite && e.pokemon.elite.indexOf(id) !== -1),
             mega: !!(m && m.isMegaMove) };
         }),
+        // Elite TM moves of the recommended moveset that the team moveset leaves out.
+        withoutElite: e.ranking.moveset.filter(function (id) { return teamMoveset(ctx, e).indexOf(id) === -1; })
+          .map(function (id) { return gm.movesById[id] ? gm.movesById[id].name : id; }),
         ivs: { atk: r1.ivs[0], def: r1.ivs[1], hp: r1.ivs[2], level: r1.level, cp: r1.cp }
       };
     });

@@ -84,6 +84,11 @@ legend { font-weight: 600; margin-bottom: 8px; }
 
 .segmented small { opacity: 0.75; }
 
+.check { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; cursor: pointer; }
+.check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+.check small { flex-basis: 100%; padding-left: 26px; color: var(--muted); font-size: 0.8125rem; }
+.member .swapped { margin-top: 4px; font-size: 0.8125rem; color: var(--muted); }
+
 /* GO Battle League status on a format: live this week, or the date a cup starts. */
 .status {
   margin-left: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;

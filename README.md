@@ -25,6 +25,7 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
 | 8. Top teams banner | ✅ done |
 | 9. GO Battle League schedule | ✅ done |
 | 10. Megas | ✅ done |
+| 11. Use Elite moves option | ✅ done |
 
 ## Features
 
@@ -46,7 +47,10 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   weaknesses, and any type that hits two members super-effectively
 - **Check your IVs** on any team member: your spread's rank among all IV combinations, its stat
   product as a % of rank 1, and the level and CP it reaches under the cap
-- **Copy link** shares the exact view (league, style, picks, selected team), e.g.
+- **Use Elite moves** (on by default): turn it off and your team uses each Pokémon's next best moves
+  on PvPoke instead of moves that need an Elite TM or a Community Day (the card notes what was
+  replaced); opponents keep their usual moves
+- **Copy link** shares the exact view (league, style, picks, selected team, Elite TM setting), e.g.
   `…/PokemonGoPvpHelper/#l=great&s=abc&p=medicham&t=2`
 - Pokémon GO icons for every ranked Pokémon (correct regional and other forms; shadows glow purple)
 - Remembers your league, style, picks and entered IVs; light and dark theme; works on phones

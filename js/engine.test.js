@@ -357,6 +357,46 @@
     });
   });
 
+  // Without Elite TM moves: each ranking may carry a noElite moveset (from the data script).
+  formats.forEach(function (f) {
+    test(f.name + ': movesets without Elite TM moves', function () {
+      var rankings = raw['rankings-' + f.id];
+      var bad = rankings.filter(function (r) {
+        if (!r.noElite) return false;
+        var elite = gm.pokemonById[r.id].elite || [];
+        return r.noElite.length !== r.moveset.length || r.noElite[0] !== r.moveset[0] && !gm.movesById[r.noElite[0]].energyGain ||
+          r.noElite.some(function (m) { return elite.indexOf(m) !== -1 || !gm.movesById[m]; });
+      });
+      eq(f.id + ': no Elite moves left, same shape, fast move first', bad.map(function (r) { return r.id; }), []);
+      var missing = rankings.slice(0, 100).filter(function (r) {
+        var elite = gm.pokemonById[r.id].elite || [];
+        return !r.noElite && r.moveset.some(function (m) { return elite.indexOf(m) !== -1; });
+      });
+      eq(f.id + ': every top-100 moveset with an Elite move has an alternative', missing.map(function (r) { return r.id; }), []);
+    });
+  });
+
+  test('suggestions without Elite TM moves (great league)', function () {
+    var ctx = E.createContext(gm, raw['rankings-great'], 1500, { noElite: true });
+    var plain = E.createContext(gm, raw['rankings-great'], 1500);
+    var teams = E.suggest(ctx, [ctx.ranked[0].id], 'abc', 5);
+    eq('five suggestions', teams.length, 5);
+    ok('team members use no Elite moves', teams.every(function (t) {
+      return E.describeTeam(ctx, t).members.every(function (m) {
+        return m.moves.every(function (mv) { return !mv.elite; }) || !ctx.byId[m.id].ranking.noElite;
+      });
+    }));
+    var needy = ctx.ranked.filter(function (e) { return e.ranking.noElite; })[0];
+    var d = E.describeTeam(ctx, { members: [needy, ctx.ranked[1], ctx.ranked[2]], score: 0 });
+    ok('the replaced Elite moves are reported', d.members[0].withoutElite.length > 0, needy.id + ': ' + d.members[0].withoutElite.join(', '));
+    eq('the same team in the usual context replaces nothing', E.describeTeam(plain, { members: [plain.byId[needy.id], plain.ranked[1], plain.ranked[2]], score: 0 })
+      .members[0].withoutElite, []);
+    eq('threats keep their usual movesets', ctx.threats.map(function (t) { return t.entry.battler.charged.map(function (m) { return m.moveId; }).join(); }),
+      plain.threats.map(function (t) { return t.entry.battler.charged.map(function (m) { return m.moveId; }).join(); }));
+    var top = E.bestTeams(ctx, 'any', 3);
+    eq('the banner works without Elite moves too', top.length, 3);
+  });
+
   test('suggest rejects bad input', function () {
     var ctx = E.createContext(gm, raw['rankings-great'], 'great');
     throws('unknown Pokémon', function () { E.suggest(ctx, ['not_a_pokemon'], 'abc'); });

@@ -124,7 +124,12 @@ All in `js/engine.js`, pure and DOM-free.
 For each team member:
 - role (lead / safe swap / closer)
 - PvPoke overall rank and score in the league, linking to its PvPoke rankings page
-- recommended fast move and two charged moves, with move types
+- recommended fast move and two charged moves (plus a Mega's "+" move), with move types. With
+  **Use Elite moves** turned off, each Elite TM move (elite or legacy in PvPoke's data) is swapped for
+  the next most-used non-Elite move of the same kind in PvPoke's move usage for that Pokémon
+  (`noElite` in the rankings data, written by `update_data.py`), and the card names the move it
+  replaced. Only the viewer's team changes; the threats keep their usual movesets, since
+  opponents may well have Elite moves. Engine: `createContext(..., { noElite: true })`.
 - recommended IVs: rank-1 stat product IVs, level, and CP for the league
 
 For the team:
@@ -172,7 +177,9 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
    GBL leagues. Fantasy Cup ended Oct 27 and left the site this way. ✅
 10. **Megas:** Mega Pokémon kept in the snapshot (with icons), the GBL formats that allow them
    offered like any cup, and PvPoke's Mega rules in the simulator (Mega move bonus, level 52). ✅
-11. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
+11. **Use Elite moves:** an option (on by default) for players without Elite TMs; turned off, team
+   members use PvPoke's next best non-Elite moves, shared in links as `e=0`. ✅
+12. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
    shielding), and limited-format cups.
 
 ## Research: Pokémon images

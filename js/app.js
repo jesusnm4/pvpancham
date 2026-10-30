@@ -48,7 +48,7 @@
   var runId = 0;       // ignores results from a superseded search
   var revealResults = false;  // set by a user pick: scroll new results into view if off-screen
   var TOP_COUNT = 3;
-  var topTeams = {};   // league -> Engine.bestTeams() for the banner (best score, no typing rule)
+  var topTeams = {};   // contextKey -> Engine.bestTeams() for the banner (best score, no typing rule)
   var topRunId = 0;    // ignores a banner search for a league the viewer already left
   var openThird = null;  // a banner team being opened: select the result that has this third member
 
@@ -69,6 +69,7 @@
       if (!s.picks[0] && s.picks[1]) s.picks = [s.picks[1], null];
     }
     if (typeof saved.selected === 'number' && saved.selected >= 0 && saved.selected < 5) s.selected = Math.floor(saved.selected);
+    if (typeof saved.noElite === 'boolean') s.noElite = saved.noElite;
     return s;
   }
 
@@ -79,7 +80,8 @@
       league: params.get('l'),
       style: params.get('s'),
       picks: (params.get('p') || '').split(',').filter(Boolean),
-      selected: Number(params.get('t')) - 1
+      selected: Number(params.get('t')) - 1,
+      noElite: params.get('e') === '0'
     };
   }
 
@@ -87,17 +89,17 @@
     var picks = st.picks.filter(Boolean);
     if (!picks.length) return '';
     return '#l=' + st.league + '&s=' + st.style + '&p=' + picks.map(encodeURIComponent).join(',') +
-      (st.selected ? '&t=' + (st.selected + 1) : '');
+      (st.selected ? '&t=' + (st.selected + 1) : '') + (st.noElite ? '&e=0' : '');
   }
 
   function load() {
-    var s = { league: 'great', style: 'abc', picks: [null, null], selected: 0 };
+    var s = { league: 'great', style: 'abc', picks: [null, null], selected: 0, noElite: false };
     try {
       applySaved(s, JSON.parse(localStorage.getItem(KEY) || '{}'));
     } catch (e) { /* private mode or bad JSON: keep defaults */ }
     var shared = readHash();
     // A shared link replaces the remembered view entirely, including empty slots.
-    if (shared) applySaved(s, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected });
+    if (shared) applySaved(s, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected, noElite: shared.noElite });
     if (shared && shared.league && LEAGUES.indexOf(shared.league) === -1) {
       startNotice = 'That link is for a cup that is no longer in GO Battle League, so it opened in ' + LEAGUE_NAMES[s.league] + '.';
     }
@@ -106,7 +108,8 @@
 
   function save() {
     try {
-      localStorage.setItem(KEY, JSON.stringify({ league: state.league, style: state.style, picks: state.picks, selected: state.selected }));
+      localStorage.setItem(KEY, JSON.stringify({ league: state.league, style: state.style, picks: state.picks, selected: state.selected,
+        noElite: state.noElite }));
     } catch (e) { /* private mode */ }
     var hash = hashFor(state);
     if (hash !== location.hash) {
@@ -175,11 +178,15 @@
     return 'hard loss';
   }
 
+  // Engine contexts are per league and per Elite TM setting (team movesets differ).
+  function contextKey(league) { return league + (state.noElite ? ':noelite' : ''); }
+
   function contextFor(league) {
+    var key = contextKey(league);
     return Promise.all([window.PvpData.gamemaster(), window.PvpData.rankings(league), window.PvpData.images()]).then(function (data) {
       images = data[2];
-      if (!contexts[league]) contexts[league] = window.Engine.createContext(data[0], data[1], LEAGUE_CP[league]);
-      return contexts[league];
+      if (!contexts[key]) contexts[key] = window.Engine.createContext(data[0], data[1], LEAGUE_CP[league], { noElite: state.noElite });
+      return contexts[key];
     });
   }
 
@@ -199,7 +206,7 @@
 
     function selectedName() {
       var id = state.picks[slot];
-      var ctx = contexts[state.league];
+      var ctx = contexts[contextKey(state.league)];
       return id && ctx && ctx.byId[id] ? ctx.byId[id].pokemon.name : '';
     }
 
@@ -211,7 +218,7 @@
     }
 
     function search(query) {
-      var ctx = contexts[state.league];
+      var ctx = contexts[contextKey(state.league)];
       var q = normalize(query);
       if (!ctx || !q) return [];
       var other = state.picks[1 - slot];
@@ -232,7 +239,7 @@
       if (!matches.length) {
         list.innerHTML = '<li class="empty" role="option" aria-disabled="true">No ranked Pokémon matches</li>';
       } else {
-        var ctx = contexts[state.league];
+        var ctx = contexts[contextKey(state.league)];
         list.innerHTML = matches.map(function (e, i) {
           return '<li role="option" id="pick-' + slot + '-opt-' + i + '" data-index="' + i + '"' +
             (i === active ? ' aria-selected="true" class="active"' : '') + '>' +
@@ -334,7 +341,7 @@
 
   function renderQuickPicks() {
     var el = document.getElementById('quick-picks');
-    var ctx = contexts[state.league];
+    var ctx = contexts[contextKey(state.league)];
     if (!ctx || currentPicks().length === 2) { el.innerHTML = ''; return; }
     var taken = currentPicks().map(function (id) { return ctx.byId[id].pokemon.dex; });
     var top = ctx.ranked.filter(function (e) { return taken.indexOf(e.pokemon.dex) === -1; }).slice(0, QUICK_PICKS);
@@ -428,7 +435,7 @@
       (notice ? '<p class="notice">' + escapeHtml(notice) + '</p>' : '') +
       '<div class="results-head"><h2>' + heading + '</h2>' +
       '<button type="button" class="chip" data-action="share">Copy link</button></div>' +
-      '<p class="hint">' + LEAGUE_NAMES[state.league] + ', ' + STYLE_HINTS[state.style] +
+      '<p class="hint">' + LEAGUE_NAMES[state.league] + ', ' + STYLE_HINTS[state.style] + (state.noElite ? ', without Elite TM moves' : '') +
       '. Team score (out of 100) rates how well the team covers the top 100 Pokémon in ' + LEAGUE_NAMES[state.league] + '.</p>' +
       '<ol class="team-list">' + list + '</ol>' +
       '<div id="team-detail">' + renderDetail(described[state.selected]) + '</div>';
@@ -456,7 +463,7 @@
   // Text for the IV checker, or a prompt when the spread is incomplete.
   function ivResult(id, ivs) {
     if (!ivs) return 'Enter Attack, Defense and HP (0–15).';
-    var ctx = contexts[state.league];
+    var ctx = contexts[contextKey(state.league)];
     var r = window.Engine.ivCheck(ctx.byId[id].pokemon, LEAGUE_CP[state.league], ivs);
     if (!r) return 'These IVs can’t get under the ' + LEAGUE_NAMES[state.league] + ' CP cap.';
     return '<strong>Rank ' + r.rank + '</strong> of ' + r.of + ' · ' + r.percent.toFixed(1) + '% of rank 1' +
@@ -483,6 +490,8 @@
         '<dl>' +
         '<dt>Fast move</dt><dd><ul class="moves">' + move(fast) + '</ul></dd>' +
         '<dt>Charged moves</dt><dd><ul class="moves">' + charged.map(move).join('') + '</ul></dd>' +
+        (m.withoutElite.length ? '<dd class="swapped">Instead of ' + m.withoutElite.map(escapeHtml).join(', ') +
+          ' <small>(Elite TM)</small></dd>' : '') +
         '<dt>Rank 1 IVs</dt><dd><span class="ivs" title="Attack / Defense / HP">' + m.ivs.atk + ' / ' + m.ivs.def + ' / ' + m.ivs.hp +
         '</span><br><small>Level ' + m.ivs.level + ' · CP ' + m.ivs.cp + '</small></dd>' +
         '</dl>' + ivChecker(m) + '</article>';
@@ -560,10 +569,11 @@
   function renderTopTeams() {
     var id = ++topRunId;
     var league = state.league;
+    var key = contextKey(league);
     var hint = document.getElementById('top-teams-hint');
     var list = document.getElementById('top-list');
     document.getElementById('top-teams-title').textContent = 'Top ' + LEAGUE_NAMES[league] + ' teams';
-    if (!topTeams[league]) {
+    if (!topTeams[key]) {
       hint.textContent = 'Ranking teams…';
       list.innerHTML = '';
     }
@@ -572,10 +582,10 @@
       // Like runSearch: let the message paint before the search blocks the main thread.
       setTimeout(function () {
         if (id !== topRunId) return;
-        if (!topTeams[league]) topTeams[league] = window.Engine.bestTeams(ctx, 'any', TOP_COUNT);
-        hint.textContent = 'Highest-scoring teams of any typing, built from the top 50 Pokémon in ' +
-          LEAGUE_NAMES[league] + '. Pick one to see its details.';
-        list.innerHTML = topTeams[league].map(function (t, i) {
+        if (!topTeams[key]) topTeams[key] = window.Engine.bestTeams(ctx, 'any', TOP_COUNT);
+        hint.textContent = 'Highest-scoring teams of any typing' + (state.noElite ? ' without Elite TM moves' : '') +
+          ', built from the top 50 Pokémon in ' + LEAGUE_NAMES[league] + '. Pick one to see its details.';
+        list.innerHTML = topTeams[key].map(function (t, i) {
           var d = window.Engine.describeTeam(ctx, t);
           return '<li><button type="button" class="top-team" data-top="' + i + '">' +
             '<span class="team-rank">' + (i + 1) + '</span>' +
@@ -596,7 +606,7 @@
   // the team doesn't fit it, in which case it switches to Best score so the team can be shown.
   document.getElementById('top-list').addEventListener('click', function (ev) {
     var btn = ev.target.closest('button[data-top]');
-    var team = btn && (topTeams[state.league] || [])[Number(btn.dataset.top)];
+    var team = btn && (topTeams[contextKey(state.league)] || [])[Number(btn.dataset.top)];
     if (!team) return;
     if (!window.Engine.assignRoles(team.members, state.style)) state.style = 'any';
     state.picks = [team.members[0].id, team.members[1].id];
@@ -668,13 +678,14 @@
         input.checked = input.value === state[field];
       });
     });
+    document.getElementById('use-elite').checked = !state.noElite;
   }
 
   // A shared link pasted into an already open tab.
   window.addEventListener('hashchange', function () {
     var shared = readHash();
     if (!shared || location.hash === hashFor(state)) return;
-    applySaved(state, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected });
+    applySaved(state, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected, noElite: shared.noElite });
     save();
     syncRadios();
     syncCombos();
@@ -702,6 +713,17 @@
     select.value = window.Theme.get();
     select.addEventListener('change', function () { window.Theme.set(select.value); });
   }
+
+  // "Use Elite moves" is the positive form of state.noElite (on by default).
+  var useElite = document.getElementById('use-elite');
+  useElite.checked = !state.noElite;
+  useElite.addEventListener('change', function () {
+    state.noElite = !useElite.checked;
+    state.selected = 0;
+    save();
+    runSearch();
+    renderTopTeams();
+  });
 
   renderLeagueOptions();
   bindRadios('league', 'league', function () { syncCombos(); renderQuickPicks(); runSearch(); renderTopTeams(); });
