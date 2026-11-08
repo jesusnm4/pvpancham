@@ -169,17 +169,16 @@ legend { font-weight: 600; margin-bottom: 10px; padding: 0; }
 .notice { color: var(--pencil); margin: 0 0 12px; font-size: var(--fs-sm); }
 .hint { color: var(--pencil); font-size: var(--fs-sm); margin: 0 0 12px; }
 .hint, .notice, .explain dd, .member .role-note { text-wrap: pretty; }
-.hint { max-width: 75ch; }
+.hint { max-width: 60ch; }   /* about 80 characters of Be Vietnam Pro at 14px */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Phones, once something is picked: the form folds to one summary line with an Edit button. */
 .form-summary { display: none; }
 /* Leagues: only this week's live formats until the viewer asks for the rest. */
 .league-row.live-only .league-group:not(.live) { display: none; }
-.league-more { margin-top: 12px; }
+
 
 /* Keyboard: a way past the 30 grid cells, shown only when it has focus. */
-.skip { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.skip:focus { position: static; width: auto; height: auto; overflow: visible; clip-path: none; margin: 0 0 12px; }
 .league-rules { margin: 12px 0 0; }
 .league-rules strong { color: var(--ink); font-weight: 600; }
 .league-notice { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 12px 0 0; font-size: var(--fs-sm); }
@@ -316,13 +315,17 @@ select option { color: #151618; background: #ffffff; }
 /* ---- Team style and Elite moves: one compact row, explanations behind a disclosure ---- */
 
 .options {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px;
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 24px;   /* every control is 40px tall */
   border-top: 1px solid var(--rule); padding-top: 16px;
 }
 .options fieldset.style { margin: 0; display: flex; align-items: center; gap: 12px; }
 .options fieldset.style:disabled { opacity: 0.5; }
 .options fieldset.style:disabled label { cursor: default; }
-.options .style-note { flex-basis: 100%; margin: -4px 0 0; }
+/* Three picks: no style applies, so none looks chosen. */
+.options fieldset.style:disabled .segmented label:has(input:checked) { background: none; border-color: var(--rule); color: var(--ink); }
+/* The three-pick note sits right under the greyed pills it explains. */
+.style-group { display: flex; flex-direction: column; gap: 6px; }
+.options .style-note { margin: 0; }
 .options legend { float: left; margin: 0; }
 .explain { font-size: var(--fs-sm); color: var(--pencil); }
 .explain summary {
@@ -330,7 +333,7 @@ select option { color: #151618; background: #ffffff; }
   text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; list-style: none;
 }
 .explain summary::-webkit-details-marker { display: none; }
-.explain[open] { flex-basis: 100%; }
+.explain[open] { flex-basis: 100%; order: 2; }
 .explain dl { margin: 4px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; }
 .explain dt { font-weight: 600; color: var(--ink); }
 .explain dd { margin: 0; }
@@ -404,7 +407,7 @@ select option { color: #151618; background: #ffffff; }
 
 /* ---- The team block: score, names and the three members on charcoal ---- */
 
-.team-block { border-radius: 12px; padding: 24px; margin: 20px 0; }
+.team-block { border-radius: 12px; padding: 24px; margin: 20px 0; scroll-margin-top: 12px; }   /* a phone row tap scrolls here */
 :root[data-theme="dark"] .team-block { box-shadow: inset 0 3px 0 var(--orange); }   /* keeps it apart from the dark page */
 
 .team-head { display: flex; align-items: flex-start; gap: 20px; }
@@ -425,6 +428,7 @@ select option { color: #151618; background: #ffffff; }
 .members { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
 .member { background: var(--band-raised); border-radius: 8px; padding: 16px; min-width: 0; }
 .member-line { display: none; }
+.member-line .line-note { display: none; }
 .slot { margin: 0; font-size: var(--fs-xs); color: var(--pencil); letter-spacing: 0.04em; }
 .member .role { margin: 2px 0 0; font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 1.25rem; line-height: 1.2; color: var(--ember); }
 .member .role-note { margin: 2px 0 12px; font-size: var(--fs-sm); color: var(--pencil); }
@@ -434,9 +438,13 @@ select option { color: #151618; background: #ffffff; }
 .member-head > div { min-width: 0; }
 .member-head h3 { font-size: var(--fs-md); }
 .pvp-rank { margin: 2px 0 0; font-size: var(--fs-sm); }
-.pvp-rank a { font-weight: 600; text-decoration: none; }
-.pvp-rank a:hover { text-decoration: underline; }
+.pvp-rank a { font-weight: 600; color: var(--ink); text-decoration: underline; text-decoration-color: var(--pencil); }
+.pvp-rank a:hover, .pvp-rank a:focus-visible { color: var(--ember); text-decoration-color: currentColor; }   /* reassurance, not an action: orange only on hover */
 .member .types { margin: 4px 0 0; display: flex; gap: 6px; flex-wrap: wrap; }
+/* The attack types a member is weak to: the first entry of its details, apart from its own types. */
+.member dd.weak { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.weak .type { background: none; border-color: color-mix(in srgb, var(--t), #fff 40%); }   /* outlined (never the member's own filled types), lightened to show on charcoal */
+.weak .type b { font-weight: 700; }
 .member dl { margin: 12px 0 0; font-size: var(--fs-sm); }
 .member dt { color: var(--pencil); font-size: var(--fs-xs); margin-top: 8px; }
 .member dd { margin: 2px 0 0; }
@@ -446,7 +454,7 @@ select option { color: #151618; background: #ffffff; }
 .ivs { font-family: var(--figures); font-weight: 600; font-variant-numeric: tabular-nums; }
 .elite {
   text-decoration: none; font-size: var(--fs-xs); font-weight: 600; padding: 0 7px; border-radius: 999px;
-  border: 1px solid var(--ember); color: var(--ember); cursor: help;
+  border: 1px solid var(--pencil); color: var(--pencil); cursor: help;
 }
 /* Mega moves are a bonus, not a cost: filled, where Elite (needs an item) is outlined. */
 .elite.mega { background: var(--orange); border-color: var(--orange); color: var(--on-orange); }
@@ -572,6 +580,10 @@ select option { color: #151618; background: #ffffff; }
     transform: rotate(-45deg); transition: transform 160ms var(--ease-out);
   }
   .member.open .chev { transform: rotate(45deg); }
+  /* Open, the body lists the moves in full: the line shows what the role means instead. */
+  .member.open .line-moves { display: none; }
+  .member.open .line-note { display: block; }
+  .member-body > .role-note { display: none; }
   .member-line:active { background: color-mix(in srgb, var(--orange) 10%, transparent); }
   .member:not(.open) .member-body { display: none; }
   .member-body { padding: 0 14px 14px; }
@@ -605,13 +617,20 @@ select option { color: #151618; background: #ffffff; }
   .league-row { gap: 12px; }
   .quick-row {
     flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
-    margin-left: -16px; margin-right: -16px; padding: 2px 32px 4px 16px;
-    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+    margin-left: -16px; margin-right: -16px; padding: 2px 56px 4px 16px;
+    mask-image: linear-gradient(to right, #000 calc(100% - 72px), transparent);
   }
   .quick-row::-webkit-scrollbar { display: none; }
   /* A cup's type list can outgrow the screen; its full rules are in the chip's title. */
   .league-row small { display: inline-block; max-width: 7.5em; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
   .quick-row > * { flex-shrink: 0; }
+  /* League chips: the open leagues' CP is in their name (and the rules line), so two fit a row. */
+  .league-row small.known-cap { display: none; }
+  /* With only the live cups showing, the selected chip right above names the format; once the
+     Classic leagues show too, the rules line names it again. */
+  .live-only ~ .league-rules .rules-name { display: none; }
+  .league-row label { padding: 8px 14px; }
+  .style-group { flex-basis: 100%; }
   .options fieldset.style { flex-basis: 100%; flex-wrap: wrap; gap: 8px; }
   .options legend { float: none; margin-bottom: 8px; }
   .options .segmented { flex-wrap: nowrap; width: 100%; }

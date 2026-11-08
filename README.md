@@ -41,7 +41,7 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   the "+" Mega move some of them get as a third charged move, marked **Mega**
 - Team styles: ABC (balanced, no shared types), Shared type (two members share a type, as ABB or
   ABA), or Best score (no typing rule); each suggested team is tagged with its layout
-- Formats grouped as **Live** this week, **Always** (the open leagues) and **Coming up**, live
+- Formats grouped as **Live** this week, **Classic** (the open leagues) and **Coming up**, live
   first; while a live format is selected only the live ones show, with **Show all leagues** for
   the rest; a first visit opens on this week's live format, and the selected format's rules are
   shown under the list
@@ -53,8 +53,8 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   appears once two are picked) to check a team you already have in mind ("Your team": its score, moves, IVs and matchups, no alternatives); the top 5 teams are listed
   with a team score out of 100, and the selected team leads with its score and how many of the
   top 100 it has a winning answer to
-- Per Pokémon: role (lead, safe swap, closer), its PvPoke rank and score in the league (linked to
-  PvPoke), recommended fast and charged moves (Elite TM moves marked), rank-1 IVs with level and CP
+- Per Pokémon: role (lead, safe swap, closer), the attack types it is weak to (double
+  weaknesses marked ×2), its PvPoke rank and score in the league (linked to PvPoke), recommended fast and charged moves (Elite TM moves marked), rank-1 IVs with level and CP
 - Per team: how many of the league's top 100 it has a winning answer to; **Against the top 30**,
   a grid of the league's top 30 Pokémon tinted win / toss-up / loss by the team's best matchup
   (tap one to see which member answers it); its 3 closest matchups; and each attack type that

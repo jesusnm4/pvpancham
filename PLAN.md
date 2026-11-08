@@ -244,7 +244,15 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
    picks muted in suggestion rows so the new partner stands out; desktop member cards aligned.
    A third critique (32/40) led to: only this week's live formats in the league picker until "Show all leagues"; quick picks
    with their label above the row; "Best answer: X (verdict)"; no repeated ABC note or tags; a
-   shorter results hint; a keyboard skip past the meta grid. ✅
+   shorter results hint; a keyboard skip past the meta grid. The open leagues are grouped as
+   "Classic", and each member card lists the types it is weak to (double weaknesses marked ×2).
+   A fourth critique (32/40) led to: a quiet PvPoke rank (orange only on hover) and grey Elite
+   tags; opened phone cards no longer repeat their moves; two league chips per phone row with
+   "Show all leagues" beside them; ×2 explained; weak-to outlines at 3:1; a neutral disabled team
+   style; a shorter top-teams hint. A fifth critique (33/40) led to: the rules line naming the
+   format again whenever the Classic leagues show; a phone tap on a suggestion scrolling to its
+   team; a clearer fade on the popular picks; the meta grid as one tab stop with arrow keys (the
+   skip pill went); the three-pick note right under the greyed team style. ✅
 15. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
    shielding), and limited-format cups.
 

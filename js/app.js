@@ -203,6 +203,17 @@
     }).join('');
   }
 
+  // The attack types a member is weak to, as the first entry of its details (after the rank, apart
+  // from its own types); a double weakness (2.56x) is marked ×2.
+  function weakLine(weakTo) {
+    if (!weakTo || !weakTo.length) return '';   // a cached engine.js from before this field
+    return '<dt>Weak to</dt><dd class="weak">' + weakTo.map(function (w) {
+      return '<span class="type" data-type="' + escapeHtml(w.type) + '"' +
+        (w.double ? ' title="Double weakness: 2.56× damage"' : '') + '>' + escapeHtml(capitalize(w.type)) +
+        (w.double ? ' <b aria-hidden="true">×2</b><span class="vh"> (double weakness)</span>' : '') + '</span>';
+    }).join('') + '</dd>';
+  }
+
   // Plain-language reading of a battle rating (500 = even).
   // The three bands of the meta grid, on the same thresholds as verdict().
   function band(rating) { return rating > 550 ? 'win' : rating >= 450 ? 'even' : 'loss'; }
@@ -677,7 +688,9 @@
       return '<article class="member">' +
         '<button type="button" class="member-line" aria-expanded="false" aria-controls="member-' + i + '">' + icon(m.id, 40) +
         '<span><span class="slot">' + slot + '</span><span class="member-name">' + escapeHtml(m.name) + '</span> <span class="role">' + ROLE_NAMES[m.role] + '</span>' +
-        '<small>' + escapeHtml(fast.name) + ' · ' + charged.map(function (mv) { return escapeHtml(mv.name); }).join(', ') + '</small></span>' +
+        '<small class="line-moves">' + escapeHtml(fast.name) + ' · ' + charged.map(function (mv) { return escapeHtml(mv.name); }).join(', ') + '</small>' +
+        // Open, the body lists the moves in full, so the line swaps them for what the role means.
+        '<small class="line-note">' + ROLE_NOTES[m.role] + '</small></span>' +
         '<span class="chev" aria-hidden="true"></span></button>' +
         '<div class="member-body" id="member-' + i + '">' +
         '<p class="slot">' + slot + '</p><p class="role">' + ROLE_NAMES[m.role] + '</p>' +
@@ -689,7 +702,7 @@
         encodeURIComponent(m.id) + '/" target="_blank" rel="noopener" title="Open in PvPoke">Ranked #' + m.rank + '</a>' +
         ' <small>of ' + m.rankedCount + ' on PvPoke (score ' + m.rankScore.toFixed(1) + ')</small></p>' +
         '</div></div>' +
-        '<dl>' +
+        '<dl>' + weakLine(m.weakTo) +
         '<dt>Fast move</dt><dd><ul class="moves">' + move(fast) + '</ul></dd>' +
         '<dt>Charged moves</dt><dd><ul class="moves">' + charged.map(move).join('') + '</ul></dd>' +
         (m.withoutElite.length ? '<dd class="swapped">Instead of ' + m.withoutElite.map(escapeHtml).join(', ') +
@@ -800,10 +813,10 @@
       '<div class="meta-head"><h3 id="meta-title">Against the top <em class="v">' + meta.length + '</em></h3>' +
       '<p class="meta-tally">' + tally('win', 'win', 'wins') + tally('even', 'toss-up', 'toss-ups') + tally('loss', 'loss', 'losses') + '</p></div>' +
       '<p class="hint">The ' + meta.length + ' you’ll meet most often, out of the 100 the team score counts.</p>' +
-      '<button type="button" class="chip skip" data-action="skip-meta">Skip the ' + meta.length + ' Pokémon</button>' +
       '<ol class="meta-grid">' + meta.map(function (t, i) {
         var b = band(t.rating);
-        return '<li><button type="button" class="meta-cell ' + b + '" data-meta="' + i + '" aria-pressed="false" aria-label="#' + (i + 1) + ' ' +
+        // One tab stop for the whole grid (roving tabindex): arrow keys move between cells.
+        return '<li><button type="button" class="meta-cell ' + b + '" data-meta="' + i + '" tabindex="' + (i ? -1 : 0) + '" aria-pressed="false" aria-label="#' + (i + 1) + ' ' +
           escapeHtml(t.name) + ': ' + BAND_NAMES[b] + '" title="#' + (i + 1) + ' ' + escapeHtml(t.name) + '">' +
           icon(t.id, 40) + '<span class="meta-rank">' + (i + 1) + '</span></button></li>';
       }).join('') +
@@ -833,17 +846,6 @@
   resultsEl().addEventListener('click', function (ev) {
     var share = ev.target.closest('button[data-action="share"]');
     if (share) { copyLink(share); return; }
-    // Keyboard: past the 30 grid cells to whatever follows the grid.
-    var skip = ev.target.closest('button[data-action="skip-meta"]');
-    if (skip) {
-      var next = skip.closest('.meta').nextElementSibling;
-      var target = next && (next.querySelector('summary') || next);
-      if (target) {
-        if (target.tabIndex < 0 && !target.matches('summary')) target.setAttribute('tabindex', '-1');
-        target.focus();
-      }
-      return;
-    }
     var line = ev.target.closest('button.member-line');
     if (line) {
       var open = line.getAttribute('aria-expanded') !== 'true';
@@ -863,13 +865,14 @@
       var i = Number(cell.dataset.meta);
       Array.prototype.forEach.call(resultsEl().querySelectorAll('.meta-cell'), function (c) {
         c.setAttribute('aria-pressed', String(c === cell));
+        c.tabIndex = c === cell ? 0 : -1;
       });
       var note = resultsEl().querySelector('.meta-note');
       note.innerHTML = metaNote(d.meta[i], i);
       // Under the last cell of the tapped row (the column count changes with the screen width).
       var grid = cell.closest('.meta-grid');
       var cells = grid.querySelectorAll('.meta-cell');
-      var cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length || 1;
+      var cols = gridColumns(grid);
       var end = cells[Math.min(Math.ceil((i + 1) / cols) * cols, cells.length) - 1].parentNode;
       if (end.nextSibling !== note.parentNode) grid.insertBefore(note.parentNode, end.nextSibling);
       return;
@@ -883,6 +886,33 @@
     });
     var detail = document.getElementById('team-detail');
     detail.innerHTML = renderDetail(described[state.selected]);
+    // On a phone the team block is below the list: bring it into view so the tap visibly does something.
+    if (window.matchMedia('(max-width: 520px)').matches) {
+      var block = resultsEl().querySelector('.team-block') || detail;
+      var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      block.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+    }
+  });
+
+  function gridColumns(grid) {
+    return getComputedStyle(grid).gridTemplateColumns.split(' ').length || 1;
+  }
+
+  // Meta grid keyboard: arrows move by cell and by row, Home/End jump to the ends.
+  // Enter and Space press the focused cell, as for any button.
+  resultsEl().addEventListener('keydown', function (ev) {
+    var cell = ev.target.closest && ev.target.closest('button[data-meta]');
+    if (!cell || ev.altKey || ev.ctrlKey || ev.metaKey) return;
+    var grid = cell.closest('.meta-grid');
+    var cells = grid.querySelectorAll('.meta-cell');
+    var i = Number(cell.dataset.meta);
+    var cols = gridColumns(grid);
+    var to = { ArrowRight: i + 1, ArrowLeft: i - 1, ArrowDown: i + cols, ArrowUp: i - cols, Home: 0, End: cells.length - 1 }[ev.key];
+    if (to === undefined) return;
+    ev.preventDefault();
+    if (to < 0 || to >= cells.length) return;   // past an edge: stay put
+    Array.prototype.forEach.call(cells, function (c, k) { c.tabIndex = k === to ? 0 : -1; });
+    cells[to].focus();
   });
 
   resultsEl().addEventListener('input', function (ev) {
@@ -923,7 +953,7 @@
         var top = topTeams[key].map(function (t) { return window.Engine.describeTeam(ctx, t); });
         // A layout tag every row shares says nothing; the hint says it once instead.
         var sameLayout = top.length > 1 && top.every(function (d) { return d.layout === top[0].layout; });
-        hint.textContent = 'The highest-scoring teams with no typing rule' + (state.noElite ? ', without Elite TM moves' : '') +
+        hint.textContent = 'Any typing' + (state.noElite ? ', without Elite TM moves' : '') +
           ', built from the top 50 Pokémon in ' + LEAGUE_NAMES[league] + ' and scored against the top 100.' +
           (sameLayout ? ' All ' + top.length + ' happen to be ' + top[0].layout + '.' : '') + ' Open one to see its moves and IVs.';
         list.innerHTML = top.map(function (d, i) {
@@ -975,7 +1005,8 @@
   function leagueChip(f, status) {
     return '<label' + (f.rules ? ' title="' + escapeHtml(f.rules) + '"' : '') + '><input type="radio" name="league" value="' +
       escapeHtml(f.id) + '"><span class="league-dot" data-family="' + leagueFamily(f) + '"></span>' +
-      escapeHtml(f.name.replace(/ League\b/, '')) + ' <small>' + escapeHtml(f.label) + '</small>' +
+      escapeHtml(f.name.replace(/ League\b/, '')) + ' <small' + (/^(Great|Ultra|Master) League\b/.test(f.name) ? ' class="known-cap"' : '') + '>' +
+      escapeHtml(f.label) + '</small>' +
       (status || '') + '</label>';
   }
 
@@ -994,7 +1025,7 @@
     // The selected format's rules, so "Great (Megas)" and "Great" are told apart.
     var rules = document.getElementById('league-rules');
     syncLeagueRow();
-    rules.innerHTML = f ? '<strong>' + escapeHtml(f.name) + ':</strong> ' +
+    rules.innerHTML = f ? '<strong class="rules-name">' + escapeHtml(f.name) + ':</strong> ' +
       escapeHtml(f.rules || (f.cp < 10000 ? f.cp.toLocaleString('en') + ' CP cap. Mega Pokémon aren’t allowed.' : 'No CP cap. Mega Pokémon aren’t allowed.')) : '';
   }
 
@@ -1029,13 +1060,18 @@
       return '<div class="league-group' + (cls ? ' ' + cls : '') + '" role="group" aria-label="' + escapeHtml(name) + '"><span class="group-label">' +
         escapeHtml(name) + '</span>' + items.map(chip).join('') + '</div>';
     }
-    document.getElementById('league-options').innerHTML =
+    var leagueRow = document.getElementById('league-options');
+    leagueRow.innerHTML =
       group(until ? 'Live until ' + shortDate(until) : 'Live', live, function (f) { return leagueChip(f); }, 'live') +
-      group(live.length ? 'Always' : 'Leagues', always, function (f) { return leagueChip(f); }) +
+      group('Classic', always, function (f) { return leagueChip(f); }) +
       group('Coming up', soon, function (f) {
         var next = f.weeks.filter(function (w) { return w[0] > NOW; })[0];
         return leagueChip(f, next ? '<span class="status soon">' + escapeHtml(shortDate(next[0])) + '</span>' : '');
       });
+
+    // "Show all leagues" closes the live group, beside its chips, so it costs no row of its own.
+    var liveGroup = leagueRow.querySelector('.league-group.live');
+    if (liveGroup) liveGroup.appendChild(document.getElementById('league-more'));
 
     // Live GBL formats the site can't offer (no PvPoke rankings), so the week's line-up is complete.
     var note = document.getElementById('gbl-week');

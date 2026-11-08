@@ -332,6 +332,9 @@ grid, How to play it and a two-column report, each set off by a hairline.
 - **≤380px:** the tagline wraps under the name, the disc is 40px, and the score sits on its own
   line above the names.
 
+Hints are capped at 60ch (about 80 characters at 14px), "How to play it" at 62ch and the footer
+credits at 54ch.
+
 Spacing rhythm is 4 / 8 / 12 / 16 / 20 / 24px, with 32px between the main column and the footer.
 
 ## Elevation & Depth
@@ -376,23 +379,27 @@ folds the form again unless the viewer opened it with Edit; opening a top team o
 folds it too. Focus moves to the pill when the control holding it folds away. Hidden above 520px.
 
 ### League groups and chips
-Labelled groups side by side (Live until …, Always / Leagues, Coming up), the label in pencil
+Labelled groups side by side (Live until …, Classic, Coming up), the label in pencil
 caps ("Live" in Live Green). Each chip is an outline pill (1px Rule, 40px tall) with a league
 stamp dot, the format's short name and its CP or type list in weight 400 (full colour, so it
 keeps its contrast on the orange fill). Selected: an
 orange fill with ink text, the dot kept with an ink ring. A coming-up chip carries its start date
 as an outlined uppercase badge. Radios are hidden inside the label; focus is a 2px Ember ring.
-While the selected format is live, only the Live group shows, followed by an outline "Show all
-leagues" pill (it becomes "Show only live"); a selected format outside the live group always shows
+While the selected format is live, only the Live group shows, closed by an outline "Show all
+leagues" pill inside the group, beside its chips (it becomes "Show only live"); a selected format outside the live group always shows
 every group, and the pill is hidden. Under the row, a hint names the selected format's rules ("**Great League (Megas):** 1,500 CP cap.
-Mega Pokémon are allowed."), so look-alike formats are told apart. A first visit opens on the
+Mega Pokémon are allowed."), so look-alike formats are told apart; on phones the name is dropped
+while only the live group shows (the selected chip right above says it), and comes back once the
+Classic leagues show too. On phones the open leagues' chips also drop their CP (their name implies
+it), so two chips fit a row. A first visit opens on the
 format live in GO Battle League this week, if one is offered. When a league change drops picks, a notice under the row names them ("**Groudon** and **Dialga**
 aren't ranked in Great League, so they were removed.") with a "Back to …" outline pill beside it.
 
 ### Quick picks
 A "Popular picks" label in pencil caps on its own line, then a row of 32px outline pills (40px on
 phones); hover turns the border to ink. On phones the row scrolls sideways, bleeding to the sheet
-edge with its right edge faded out, so the cut-off chip reads as "more".
+edge with its last 72px faded out (and 56px of end padding, so the last chip can scroll clear of
+the fade), so the cut-off chip reads as "more".
 
 ### Search combobox
 A 48px pill field on Field tone with a hairline border and a round clear button; focus is a 2px
@@ -404,8 +411,10 @@ phones; the third appears once two are picked.
 ### Options row and "What do these mean?"
 Above a hairline: the Team style segmented pills (selected orange), the "Use Elite moves"
 checkbox (orange accent), and a disclosure whose summary is an underlined Ember link. Open, it is
-a definition list (terms in ink 600, definitions in pencil). With three picks the style fieldset
-dims to 50% with a pencil note saying why.
+a definition list (terms in ink 600, definitions in pencil), including "Weak to, ×2". With three
+picks the style fieldset dims to 50% and no pill looks chosen (the selected one loses its orange),
+with a pencil note directly under the pills saying why (the pills and note are one group; the
+row aligns to the top, every control in it 40px tall).
 
 ### Team rows
 Suggestions and top teams share one pattern: a list of full-width hairline rows,
@@ -415,7 +424,9 @@ and an 8% orange wash, no border. Hover: a 4% ink wash (12% orange when selected
 rows the viewer's own picks are pencil 400, so the new partners stand out in ink.
 In results the five suggestions stay in view above the selected team block at every width: with
 one or two picks they are the choice the viewer is making (a folded "other teams" disclosure was
-tried and dropped for hiding it). The results head pairs the heading with the orange "Copy link" pill.
+tried and dropped for hiding it). On phones, where the team block sits below the list, tapping a
+row scrolls smoothly to the team block, 12px clear of the top (an instant jump under reduced
+motion); desktop doesn't scroll. The results head pairs the heading with the orange "Copy link" pill.
 
 ### Team block
 The signature: a charcoal band with 12px corners. Head: the score (40px) with "of 100" under it;
@@ -427,24 +438,28 @@ the names (24px; 20px on phones); "Has a winning answer to **N of the top 100** 
 Three raised cards (band-raised, 8px, 16px padding) under the head. Each: the play-order counter
 "01" / "02" / "03" in pencil 12px (the only zero-padded number on the page), the role in Platypi italic Ember, a role note in pencil (held to two lines tall on desktop so the three cards line up), then a
 64px icon with the name (16px 600), type chips and the PvPoke rank ("**Ranked #52** of 1154 on
-PvPoke (score 89.4)", the rank an Ember link), a definition list of
-moves (type dot, name, Elite or Mega tag) and Rank 1 IVs labelled "Atk 1 · Def 15 · HP 15" in
+PvPoke (score 89.4)"; the rank is ink 600 with a pencil underline, turning Ember only on hover or
+focus: it is reassurance, not an action, so it never outshines the name), a definition list that opens with "Weak to" (the attack types that hit it
+super-effectively, as outlined type chips, double weaknesses first and marked "×2" with
+"(double weakness)" for screen readers; the outline is the type colour lightened 40% toward white,
+at least 3:1 on the card, and kept apart from the member's own filled type chips), then the moves (type dot, name, Elite or Mega tag) and Rank 1 IVs labelled "Atk 1 · Def 15 · HP 15" in
 the figures face, and a "Check your
 IVs" disclosure with three tabular inputs. On ≤720px each card starts as one 64px-tall line
 button: 44px icon, slot counter, name, the italic role on its own line and the moves on a
-pencil line that wraps (never cut off), with an Ember chevron that turns down when open; the body below does not repeat the
-icon, name, slot or role.
+pencil line that wraps (never cut off), with an Ember chevron that turns down when open. Open,
+the line swaps its moves for the role note ("Starts the battle."), since the body lists the moves
+in full; the body does not repeat the icon, name, slot, role or role note.
 
 ### Move tags
-Elite (needs an Elite TM or Community Day) is an Ember outlined pill; Mega (a bonus third
+Elite (needs an Elite TM or Community Day) is a pencil outlined pill (a cost, not an action); Mega (a bonus third
 charged move) is a filled orange pill with ink text. Both 12px, 600.
 
 ### Meta grid
 "Against the top *30*": square 8px cells, 15 / 10 / 6 across, each with the icon (72%), its rank
 in ink 12px on a small sheet-coloured tab top left (readable on every tint), and the band tint.
 A tally of swatches sits beside the heading, and a hint under it says these are the 30 met most
-often, out of the 100 the team score counts. Before the grid, a "Skip the 30 Pokémon" outline pill is visually hidden until it has keyboard
-focus, and moves focus past the grid. A tapped or focused cell gets a 2px Ember outline
+often, out of the 100 the team score counts. The grid is one tab stop (roving tabindex): arrow
+keys move by cell and by row, Home and End jump to the ends, and Enter or Space shows the note. A tapped or focused cell gets a 2px Ember outline
 and writes the threat, its best answer and the verdict in a full-width note row that moves to
 just under the tapped cell's row. Hover turns the border to the full band colour.
 

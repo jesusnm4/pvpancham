@@ -88,6 +88,13 @@
     return TYPES.filter(function (t) { return isSuperEffective(t, defenseTypes); });
   }
 
+  // The same, as [{ type, double }] with double weaknesses (both types weak: 1.6 x 1.6 = 2.56x) first.
+  function weakTo(defenseTypes) {
+    return weaknesses(defenseTypes).map(function (t) {
+      return { type: t, double: effectiveness(t, defenseTypes) > 2 };
+    }).sort(function (x, y) { return y.double - x.double; });
+  }
+
   // ---- CP and IVs ----
 
   function cpmAt(level) { return CPM[Math.round((level - 1) * 2)]; }
@@ -702,7 +709,8 @@
         // Elite TM moves of the recommended moveset that the team moveset leaves out.
         withoutElite: e.ranking.moveset.filter(function (id) { return teamMoveset(ctx, e).indexOf(id) === -1; })
           .map(function (id) { return gm.movesById[id] ? gm.movesById[id].name : id; }),
-        ivs: { atk: r1.ivs[0], def: r1.ivs[1], hp: r1.ivs[2], level: r1.level, cp: r1.cp }
+        ivs: { atk: r1.ivs[0], def: r1.ivs[1], hp: r1.ivs[2], level: r1.level, cp: r1.cp },
+        weakTo: weakTo(e.pokemon.types)
       };
     });
 
@@ -767,6 +775,7 @@
     effectiveness: effectiveness,
     isSuperEffective: isSuperEffective,
     weaknesses: weaknesses,
+    weakTo: weakTo,
     cpmAt: cpmAt,
     cpFor: cpFor,
     ivFloor: ivFloor,

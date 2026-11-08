@@ -61,6 +61,10 @@
     close('dragon vs fairy is double resisted', E.effectiveness('dragon', ['fairy']), 0.390625);
     eq('steel weaknesses', E.weaknesses(['steel']), ['fighting', 'ground', 'fire']);
     eq('water/ground has one weakness', E.weaknesses(['water', 'ground']), ['grass']);
+    eq('grass/flying is doubly weak to ice, listed first', E.weakTo(['grass', 'flying']),
+      [{ type: 'ice', double: true }, { type: 'flying', double: false }, { type: 'poison', double: false },
+       { type: 'rock', double: false }, { type: 'fire', double: false }]);
+    eq('a single type has no double weakness', E.weakTo(['steel']).filter(function (w) { return w.double; }), []);
     ok('super effective times resisted is neutral', !E.isSuperEffective('water', ['water', 'ground']));
   });
 
@@ -329,6 +333,9 @@
         return ctx.ranked[m.rank - 1].id === m.id && m.rankedCount === ctx.ranked.length;
       }));
       ok(league + ': IVs fit the cap', d.members.every(function (m) { return m.ivs.cp <= cap; }));
+      ok(league + ': members list the types they are weak to', d.members.every(function (m) {
+        return JSON.stringify(m.weakTo) === JSON.stringify(E.weakTo(m.types));
+      }));
       ok(league + ': every member has a fast and a charged move', d.members.every(function (m) { return m.moves.length >= 2; }));
       eq(league + ': three strengths and three weaknesses', [d.strengths.length, d.weaknesses.length], [3, 3]);
       ok(league + ': strengths rate higher than weaknesses', d.strengths[2].rating >= d.weaknesses[2].rating);
