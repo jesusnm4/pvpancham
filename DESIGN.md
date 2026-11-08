@@ -2,365 +2,497 @@
 name: PvPancham
 description: Pokémon GO PvP team builder for the leagues and cups on this week.
 colors:
-  accent: "#2a62c9"
-  accent-dark: "#6b9cf0"
-  accent-ultra: "#8a6400"
-  accent-ultra-dark: "#e2b53e"
-  accent-master: "#6a3fc4"
-  accent-master-dark: "#b195f2"
-  accent-cup: "#4a5361"
-  accent-cup-dark: "#b4bcc6"
-  band-win: "#187a42"
-  band-win-dark: "#5cc98d"
-  band-even: "#8a6400"
-  band-even-dark: "#e2b53e"
-  band-loss: "#b42318"
-  band-loss-dark: "#f97066"
-  accent-text: "#ffffff"
-  accent-text-dark: "#0d1014"
+  orange: "#f66c40"
+  on-orange: "#151618"
+  ember: "#b83d12"
+  ember-dark: "#f66c40"
+  paper: "#f0f0f3"
+  paper-dark: "#111214"
+  dot: "rgb(21 22 24 / 0.13)"
+  dot-dark: "rgb(255 255 255 / 0.07)"
+  sheet: "#f8f8fb"
+  sheet-dark: "#1b1d22"
+  field: "#f0f0f3"
+  field-dark: "#111214"
+  ink: "#151618"
+  ink-dark: "#f2f2f5"
+  pencil: "#676a70"
+  pencil-dark: "#a3a5ad"
+  rule: "#d4d5db"
+  rule-dark: "#383b43"
+  band: "#1b1d22"
+  band-dark: "#23262c"
+  band-raised: "#26292f"
+  band-raised-dark: "#2c2f36"
+  band-field: "#17181b"
+  band-rule: "#3a3d45"
+  win: "#187a42"
+  win-dark: "#5cc98d"
+  even: "#8a6400"
+  even-dark: "#e2b53e"
+  loss: "#b3123f"
+  loss-dark: "#f7728f"
   live: "#187a42"
   live-dark: "#5cc98d"
-  error: "#b42318"
-  error-dark: "#f97066"
-  paper: "#f6f7f9"
-  paper-dark: "#121418"
-  sheet: "#ffffff"
-  sheet-dark: "#1c1f25"
-  ink: "#1b1f24"
-  ink-dark: "#e8eaed"
-  pencil: "#5b6470"
-  pencil-dark: "#9aa3ad"
-  rule: "#d8dde3"
-  rule-dark: "#30353d"
+  error: "#b3123f"
+  error-dark: "#f7728f"
+  league-great: "#2a62c9"
+  league-great-dark: "#6b9cf0"
+  league-ultra: "#8a6400"
+  league-ultra-dark: "#e2b53e"
+  league-master: "#6a3fc4"
+  league-master-dark: "#b195f2"
+  league-cup: "#4a5361"
+  league-cup-dark: "#b4bcc6"
   shadow-glow: "#8a3fd1"
 typography:
-  score:
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
-    fontSize: "2rem"
-    fontWeight: 700
+  display:
+    fontFamily: "Be Vietnam Pro, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontSize: "clamp(2.25rem, 4vw + 1rem, 4rem)"
+    fontWeight: 600
     lineHeight: 1
-    letterSpacing: "-0.02em"
-    fontFeature: "tnum"
-  headline:
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
-    fontSize: "1.25rem"
-    fontWeight: 700
-    lineHeight: 1.25
+    letterSpacing: "0.005em"
+  score:
+    fontFamily: "Be Vietnam Pro, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontSize: "2.5rem"
+    fontWeight: 600
+    lineHeight: 1
     letterSpacing: "-0.01em"
+  headline:
+    fontFamily: "Be Vietnam Pro, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontSize: "1.5rem"
+    fontWeight: 600
+    lineHeight: 1.2
   title:
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontFamily: "Be Vietnam Pro, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "1rem"
-    fontWeight: 700
+    fontWeight: 600
+    lineHeight: 1.3
   body:
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontFamily: "Be Vietnam Pro, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.5
   small:
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontFamily: "Be Vietnam Pro, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "0.875rem"
-    fontWeight: 400
-    lineHeight: 1.5
+    fontWeight: 500
+    lineHeight: 1.2
   label:
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontFamily: "Be Vietnam Pro, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 600
-    letterSpacing: "0.04em"
+    letterSpacing: "0.06em"
+  voice:
+    fontFamily: "Platypi, Georgia, serif"
+    fontWeight: 500
+  role:
+    fontFamily: "Platypi, Georgia, serif"
+    fontSize: "1.25rem"
+    fontWeight: 500
+    lineHeight: 1.2
+  figures:
+    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontWeight: 600
+    fontFeature: "tnum"
 rounded:
-  tag: "4px"
-  field: "6px"
-  control: "8px"
-  card: "10px"
-  panel: "12px"
+  swatch: "4px"
+  inner: "8px"
+  sheet: "12px"
   pill: "999px"
 spacing:
   xs: "4px"
   sm: "8px"
   md: "12px"
   lg: "16px"
+  xl: "20px"
+  xxl: "24px"
+  section: "32px"
 components:
   panel:
     backgroundColor: "{colors.sheet}"
-    rounded: "{rounded.panel}"
-    padding: "16px"
+    rounded: "{rounded.sheet}"
+    padding: "20px"
   chip-league:
     textColor: "{colors.ink}"
+    typography: "{typography.small}"
     rounded: "{rounded.pill}"
-    padding: "6px 14px"
+    padding: "8px 16px"
+    height: "40px"
   chip-league-selected:
-    backgroundColor: "{colors.accent}"
-    textColor: "{colors.accent-text}"
+    backgroundColor: "{colors.orange}"
+    textColor: "{colors.on-orange}"
     rounded: "{rounded.pill}"
-    padding: "6px 14px"
+    padding: "8px 16px"
+    height: "40px"
   chip-quick:
     textColor: "{colors.ink}"
+    typography: "{typography.small}"
     rounded: "{rounded.pill}"
-    padding: "4px 12px"
+    padding: "4px 14px"
     height: "32px"
-  input-search:
-    backgroundColor: "{colors.sheet}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.control}"
-    padding: "8px 36px 8px 10px"
-  team-option:
-    textColor: "{colors.ink}"
-    rounded: "{rounded.control}"
-    padding: "8px 10px"
-  member-card:
-    rounded: "{rounded.card}"
-    padding: "12px"
-  badge-live:
-    backgroundColor: "{colors.live}"
-    textColor: "#ffffff"
+  button-primary:
+    backgroundColor: "{colors.orange}"
+    textColor: "{colors.on-orange}"
     rounded: "{rounded.pill}"
-    padding: "0 6px"
+    padding: "8px 18px"
+    height: "40px"
+  button-primary-hover:
+    backgroundColor: "{colors.on-orange}"
+    textColor: "{colors.orange}"
+  input-search:
+    backgroundColor: "{colors.field}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    padding: "10px 44px 10px 18px"
+    height: "48px"
+  select-pill:
+    textColor: "{colors.ink}"
+    typography: "{typography.small}"
+    rounded: "{rounded.pill}"
+    padding: "8px 34px 8px 16px"
+    height: "40px"
+  team-row:
+    textColor: "{colors.ink}"
+    padding: "12px 8px"
+  team-rank-selected:
+    backgroundColor: "{colors.orange}"
+    textColor: "{colors.on-orange}"
+    size: "30px"
+  team-block:
+    backgroundColor: "{colors.band}"
+    textColor: "{colors.ink-dark}"
+    rounded: "{rounded.sheet}"
+    padding: "24px"
+  member-card:
+    backgroundColor: "{colors.band-raised}"
+    textColor: "{colors.ink-dark}"
+    rounded: "{rounded.inner}"
+    padding: "16px"
+  tag-mega:
+    backgroundColor: "{colors.orange}"
+    textColor: "{colors.on-orange}"
+    typography: "{typography.label}"
+    rounded: "{rounded.pill}"
+    padding: "0 7px"
 ---
 
 # Design System: PvPancham
 
-<!-- Recorded from the code at 2d8bc5c and updated through design phase 4 (polish) and its follow-ups in
-     PLAN.md. Update this file as each phase lands. -->
+<!-- Recorded from the code (styles.css, index.html, js/app.js, fonts/) after the redesign,
+     milestone 14 in PLAN.md. The build is the source of truth: keep this file in step with
+     styles.css whenever it changes. -->
 
 ## Overview
 
-**Creative North Star: "The Trainer's Notebook"**
+**Creative North Star: "The Trainer's Studio Sheet"**
 
-A clear, quiet field notebook a trainer keeps between battles: plain paper, legible handwriting,
-confident figures, and colour only where it means something. The page is a tool used in short
-sessions on a phone, so it stays calm and dense rather than decorative; the Pokémon icons and the
-game's type colours are the only pictures, and they carry the GO flavour.
+A confident working sheet rather than a quiet dashboard. The page is pale dotted paper with
+charcoal colour blocks laid on it: a charcoal header band, the selected team as a charcoal block,
+and a charcoal footer. One loud orange marks every place to act and everything that is chosen, so
+a player on a phone sees at a glance where to tap and what is selected. A serif italic gives the
+tool a voice in exactly one word per heading and in the role words, while a plain sans does all
+the working text.
 
-Today the system is a single column of white sheets on a light grey ground (dark mode: charcoal
-sheets on near-black), the system font throughout, and one blue accent for selection, links and
-focus. Depth comes from borders, not shadows. Controls are calm and tactile: quiet at rest, with a
-clear selected state.
+Density stays high and calm: hairline rows instead of boxes, flat sheets with no resting
+shadows, numbered rows in grey, and pills for every control. The Pokémon icons and
+the game's own type colours are the only pictures. Pancham's icon sits in an orange disc in the
+header as the one decorative use of orange.
 
 **Key Characteristics:**
-- System font, one family, weight does the emphasis.
-- One accent colour (blue) for selection, focus and links; green only for "Live".
-- Game type colours as tints on chips, never as fills behind text.
-- Flat, bordered surfaces; the one shadow is the search dropdown.
-- Pill chips for choices, rounded rectangles for content.
+- Dotted pale paper, flat light sheets, charcoal bands that stay light-on-dark in both themes.
+- One action colour: orange fill with ink text; Ember where orange must be text or a line.
+- Be Vietnam Pro for everything; Platypi italic for one voice word per heading and the role words.
+- Every control is a full pill; lists are numbered hairline rows.
+- Flat at rest: the floating dropdown is the only thing that casts a shadow.
 
 ## Colors
 
-A cool neutral notebook with one blue pen and the game's type colours as small tints.
+Cool near-white paper and charcoal blocks, one orange for action, and meaning colours (bands,
+league stamps, game types) kept small and never confused with the orange.
 
-### Primary: the league pen
-The accent (`--accent`) follows the selected format, as the game colours its leagues. `app.js`
-sets `data-league` on `<html>` (`applyAccent`): open leagues and the open Mega formats by CP cap,
-cups with their own rules neutral.
-- **Notebook Blue** (#2a62c9 light, #6b9cf0 dark): Great League and 1,500 CP Mega formats; also
-  the default.
-- **Ultra Gold** (#8a6400 / #e2b53e): Ultra League formats.
-- **Master Purple** (#6a3fc4 / #b195f2): Master League formats.
-- **Cup Slate** (#4a5361 / #b4bcc6): cups (e.g. Mega Halloween, Catch).
+### Primary
+- **Pancham Orange** (`orange`): fills only. Selected league and style chips, the selected team
+  row's rank disc and its faint wash (8%, 12% on hover), the primary "Copy link" pill, the Mega move tag, the combobox active row (16%), `::selection` (32%),
+  `accent-color` for native controls, the dark-mode top inset on the team block, and the Pancham
+  disc. Text on an orange fill is always **On-orange Ink** (`on-orange`).
+- **Ember** (`ember`, `ember-dark`): orange as text or as a line. On light grounds it is the deep
+  ember that clears 4.5:1; in dark mode and inside every charcoal band it is plain orange. Links,
+  focus rings, disclosure summaries and chevrons, the caret, the role words, and the Elite tag outline.
 
-It marks selected league and style chips, the selected team, member roles, links, focus rings,
-Elite tags and the top-teams panel border (45% mix). Every accent clears 4.5:1 against the page
-and against its chip text (white in light, #0d1014 in dark).
+### Secondary: meaning colours
+- **Win Green / Toss-up Gold / Loss Crimson** (`win`, `even`, `loss` and their dark values): the
+  meta grid bands and tally swatches, on the verdict thresholds (win above 550, toss-up 450–550,
+  loss below 450). Cells are a 16% tint over the sheet with a 50% border; toss-ups dashed; losses
+  a 24% tint and a 2px border, so bands differ in more than hue.
+- **Live Green** (`live`): the "Live until …" group label only.
+- **Error Crimson** (`error`): load and data errors only; the same value as Loss.
 
-### Matchup bands
-The meta grid's three bands, on the same thresholds as the verdict words (win above 550, toss-up
-450–550, loss below 450):
-- **Win** (#187a42 / #5cc98d), **Toss-up** (#8a6400 / #e2b53e), **Loss** (#b42318 / #f97066),
-  each as a 16% tint with a 50% border (losses 24% and a 2px border; toss-ups dashed), so the
-  bands differ in more than hue.
-
-### Secondary
-- **Live Green** (#187a42 light, #5cc98d dark, `--live`): the "Live until …" label on the group of
-  formats on in GBL this week. Nothing else.
+### Tertiary: league stamps
+- **Great Blue, Ultra Gold, Master Purple, Cup Slate** (`league-*`): a dot on each league chip
+  and a dot before the team's league name in the team block (`data-league` on `<html>`, set by
+  `applyAccent` from `leagueFamily`: open leagues and open Mega formats by CP cap, cups with their
+  own rules slate). On a selected chip the dot stays, ringed in ink.
 
 ### Neutral
-- **Paper** (#f6f7f9 / #121418): page ground.
-- **Sheet** (#ffffff / #1c1f25): panels, inputs, dropdown.
-- **Ink** (#1b1f24 / #e8eaed): body text and names.
-- **Pencil** (#5b6470 / #9aa3ad): hints, secondary notes, labels.
-- **Rule** (#d8dde3 / #30353d): every border and divider; also the unselected rank dot.
-- **Error Red** (#b42318 / #f97066): load and data errors only.
+- **Dotted Paper** (`paper`, with `dot`): the page ground, a 1px radial dot every 24px.
+- **Sheet** (`sheet`): panels and the dropdown.
+- **Field** (`field`): search fields and IV inputs, sunk to paper tone inside the sheet.
+- **Ink** (`ink`): text and names. **Pencil** (`pencil`): hints, row numbers, labels, slot
+  counters. **Rule** (`rule`): every hairline and outline.
+- **Charcoal Band** (`band`, `band-raised`, `band-field`, `band-rule`): header, team block and
+  footer, with member cards one step raised.
 
-### Type and form colours
-The 18 game type colours (`.type[data-type]`, e.g. fire #e62829, water #2980ef) tint type chips at
-22% with a 60% border; text stays in Ink. Dark and ghost get lighter values in dark mode. Shadow
-Pokémon icons get a purple glow (#8a3fd1).
+### Game type colours (a deliberate exception)
+The 18 type colours are the game's own (`.type[data-type]`, e.g. fire #e62829, water #2980ef)
+and carry meaning, so they stay as the game has them: a 22% tint with a 60% border on type chips
+(text in ink) and a solid 10px dot before each move. Dark and ghost are lightened in dark mode
+and in bands. Fighting (#e0712c) sits close to Pancham Orange; it is allowed because it only ever
+appears as a tint or a dot, never as a fill behind an action. Shadow Pokémon icons get a purple
+glow (`shadow-glow`).
 
-**The One Pen Rule.** The league accent is the only interactive colour. A second hue appears only when it carries
-meaning the blue can't (Live, a type, an error).
+### Named Rules
+**The Act Here Rule.** Orange means "act here / this is chosen". As a fill its text is ink; as
+text or a line on a light ground it is Ember; on dark it is plain orange. Nothing decorative is
+orange except the Pancham disc.
+
+**The Stamp Not Pen Rule.** League colours are stamps: a dot on chips and on the team's league.
+They never mark selection, focus or links.
+
+**The Crimson Loss Rule.** Loss and error are crimson so a bad result never reads as the brand
+orange.
+
+**The Band Rule.** A charcoal band redefines the tokens locally (sheet, field, ink, pencil, rule,
+ember, bands, stamps) so everything inside is light-on-dark in both themes. Put a component in a
+band and it adapts; never hard-code light-on-dark colours inside one.
 
 ## Typography
 
-**Body Font:** system-ui (with -apple-system, Segoe UI, Roboto, sans-serif)
+**Body Font:** Be Vietnam Pro 400 / 500 / 600 (with system-ui, -apple-system, Segoe UI, Roboto)
+**Voice Font:** Platypi Italic 400–500 (with Georgia, serif)
+**Figures Font:** the system face, tabular (`--figures`)
 
-**Character:** the platform's own font, so it reads like part of the phone. Hierarchy comes from
-weight and a small size step, not from a second family.
+**Character:** a round, open working sans with a lively serif italic for the voice: the sans
+does the job, the italic says one word with feeling.
+
+Both faces are self-hosted woff2 in `fonts/` (Latin subsets) with their OFL texts beside them,
+`font-display: swap`. Characters outside the subsets (e.g. ♀ ♂) fall back to the system face.
 
 ### Hierarchy
-Five steps, as CSS custom properties: `--fs-xs` 12, `--fs-sm` 14, `--fs-md` 16, `--fs-lg` 20,
-`--fs-xl` 32px. No other size ships; `<small>` is pinned to `--fs-sm`.
-- **Score** (700, 32px, line-height 1, −0.02em, tabular): the selected team's score, once per
-  screen, in the team header.
-- **Headline** (700, 20px, 1.25, −0.01em): the site title, section headings, the team header's
-  names.
-- **Title** (700, 16px): member names, report headings.
-- **Body** (400, 16px, 1.5): running text, inputs; on phones also member details, threat lists
-  and the IV checker, which are the main reading there.
-- **Small** (400, 14px): hints, chips, member details on desktop, footer.
-- **Label** (600, 12px): member roles and layout tags (0.04em, uppercase), group labels, badges.
+Five steps as custom properties, `--fs-xs` 12, `--fs-sm` 14, `--fs-md` 16, `--fs-lg` 24,
+`--fs-xl` 40px, plus `--fs-display` for the header name only. `<small>` is pinned to 14px.
+- **Display** (600, clamp 36–64px, 1, 0.005em): the header name "Pv*Pancham*", one line.
+- **Score** (600, 40px, 1, −0.01em): the selected team's score, once per screen, with "of 100".
+- **Headline** (600, 24px, 1.2): section headings, the team block's names, the meta grid and
+  How to play it headings.
+- **Title** (600, 16px, 1.3): member names, report headings, legends.
+- **Body** (400, 16px, 1.5): running text and inputs; on phones also member details, threat
+  lists and the IV checker.
+- **Small** (500, 14px, 1.2 in controls; 400 in hints): chips, selects, hints, footer.
+- **Label** (600, 12px, 0.06em, uppercase): league group labels and the quick-picks label;
+  layout tags and the coming-up date badge use the same size with 0.03–0.04em.
+- **Role** (Platypi italic 500, 20px, 1.2, Ember): the member's role word; 16px on the phone
+  one-line card.
 
-Headings use `text-wrap: balance`, hints `text-wrap: pretty`. Every figure that is compared
-(scores, ranks, IVs, rank dots) uses `font-variant-numeric: tabular-nums`.
+Headings use `text-wrap: balance`; hints and notes `text-wrap: pretty`.
 
-**The One Big Number Rule.** Only the selected team's score is set large. Every other figure
-stays at its text size; the score's meaning ("Has a winning answer to N of the top 100") sits
-right beside it.
+### Named Rules
+**The One Italic Word Rule.** A heading carries at most one Platypi italic word ("Top *teams*",
+"Against the top *30*", "How to *play* it", "Pv*Pancham*"). Role words
+("*Lead*", "*Safe swap*", "*Closer*") are set the same way. Names, numbers, moves and data are
+never in the serif.
+
+**The Aligned Figures Rule.** Be Vietnam Pro has no tabular figures, so anything that must line
+up in a column (Rank 1 IVs, the IV inputs) uses the system face with
+`tabular-nums`. Single figures (the score, row scores, grid ranks) stay in the sans.
+
+**The Fixed Scale Rule.** Only the five steps and the display size ship. The documented
+exceptions: team names drop to 20px at ≤520px, the header name clamps to 28–36px at ≤520px and
+22–28px at ≤380px, and the role word is 20px.
 
 ## Layout
 
-One centred column, max 960px with 16px side padding. Sections are stacked panels 16px apart:
-the form (league or cup, your Pokémon, then a ruled-off options row with team style, Elite moves
-and "What do these mean?"), then results, then top teams. With no picks the results panel is
-hidden, so top teams sit right under the form as the starting point. Inside the
-form, fieldsets are 16px apart. Results show a team list, then three member cards in a row, then a
-two-column strengths/weaknesses report.
+One centred column, max 960px with 16px side padding, inside full-width charcoal header and
+footer bands. Sections are stacked sheets 16px apart: the form (league or cup, your Pokémon, then
+a ruled-off options row), the results and top teams. With no
+picks the results sheet is hidden and top teams sit right under the form. Inside the results:
+the team list, the charcoal team block with three member cards in a row, then the meta
+grid, How to play it and a two-column report, each set off by a hairline.
 
-- **≤720px:** top teams, member cards and the report go to one column.
-- **≤520px:** the league groups and popular picks become single sideways-scrolling rows that
-  bleed to the panel edge (the cut-off chip shows there's more), and the selected league is
-  scrolled into view; a cup's long type list is truncated (full rules in its title). The pickers
-  stack, the style chips share the width equally, team rows put names on their own line, and
-  dropdown type chips hide so full names fit.
+- **≤720px:** meta grid 10 across, report one column, member cards stack and collapse to one
+  line each, team block padding 20px 16px.
+- **≤520px:** header compacts (48px disc, theme label visually hidden). Once anything is picked
+  the form folds to one summary line (league, picks, style) with an Edit pill, so the team comes
+  first; see Form summary. League groups wrap under their labels, live first, so this week's cups
+  are never off-screen; popular picks stay one sideways row that bleeds to the sheet edge so the
+  cut-off chip shows there is more. Hints, notices, the meta note and role notes read at 16px.
+  Pickers stack, style chips share the width, team rows put the names on their own line
+  under rank, icons, layout and score. Meta grid 6 across. Member details, threats and the IV
+  checker go up to body size. The team block head becomes a grid with the score beside the names.
+- **≤380px:** the tagline wraps under the name, the disc is 40px, and the score sits on its own
+  line above the names.
 
-Spacing rhythm is 4 / 8 / 12 / 16px.
+Spacing rhythm is 4 / 8 / 12 / 16 / 20 / 24px, with 32px between the main column and the footer.
 
 ## Elevation & Depth
 
-Flat. Surfaces are separated by 1px Rule borders and the Paper/Sheet contrast. The only shadow is
-the search dropdown (`0 8px 24px rgb(0 0 0 / 0.18)`), because it floats over content.
+Flat. Depth comes from colour blocks: dotted paper, a lighter sheet, a charcoal band, and a
+raised member card one step lighter than its band. Rows are separated by 1px hairlines, not
+boxes.
 
-**The Border Not Shadow Rule.** Resting surfaces never cast shadows; only something floating
-over the page does.
+### Shadow Vocabulary
+- **Float** (`box-shadow: 0 8px 32px rgb(17 17 26 / 0.1), 0 4px 16px rgb(17 17 26 / 0.08)`;
+  dark `0 8px 32px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.3)`): the search dropdown only.
+- **Dark-mode team inset** (`box-shadow: inset 0 3px 0 #f66c40`): a 3px orange top rule on the
+  team block in dark mode only, where the charcoal block otherwise sits almost level with the
+  dark page. A cited adaptation, kept after the finish review; it is a rule, not a shadow.
+
+### Named Rules
+**The Only Float Rule.** Resting surfaces never cast shadows; only the floating dropdown does.
 
 ## Shapes
 
-Gently rounded: tags 4px, fields 6px, controls and team rows 8px, member cards 10px, panels 12px.
-Every choice (league, style, quick pick, type, Live) is a full pill (999px). Rank dots are circles.
+Every control is a full pill (999px): league and style chips, quick picks, recovery fixes,
+buttons, search fields, selects, type chips, move tags, layout tags and the
+date badge. Sheets, the team block and the dropdown have 12px corners; member cards,
+meta cells, IV inputs and dropdown rows 8px; tally swatches 4px. Rank discs, league dots, the
+Pancham disc and the clear button are circles. Disclosure and chevron arrows are a 2px Ember
+corner rotated 45°.
 
 ## Components
 
 ### Site header
-Pancham's 48px icon (decorative) to the left of the name, "PvPancham" (Headline), with the
-tagline "Pokémon GO PvP team builder" under it in muted 14px; the theme select on the right.
-On phones the select's "Theme" label is visually hidden (kept for screen readers) so the name and
-tagline keep one line each.
+A charcoal band. Pancham's icon (60px, decorative) in a 72px orange disc, then "Pv*Pancham*" at
+display size and the tagline in pencil 14px; the theme select pill on the right. On phones the
+disc shrinks (48px, 40px at ≤380px) and the name stays on one line beside the theme pill.
 
-### League and style chips
-Calm and tactile. Pill, 1px Rule border, 6px 14px, at least 40px tall, never wrapping inside.
-Selected: Notebook Blue fill, white text. League chips sit in labelled groups (Live until …,
-Always, Coming up); a coming-up chip carries its start date as an outlined badge. Keyboard focus: 2px blue outline, 2px offset. Radio
-inputs are visually hidden inside the label.
+### Form summary (phones)
+At ≤520px, with one or more picks, the form sheet shows one line: the league in ink 600, then the
+picks and team style in pencil, separated by " · ", then an outline "+ Add Pokémon" pill (while
+fewer than three are picked; it opens the form on the next empty field and focuses it) and an
+outline "Edit" pill. The line wraps the pills under the text when they don't fit.
+Edit opens the full form under the line (a hairline between them) and becomes "Done". A pick
+folds the form again unless the viewer opened it with Edit; opening a top team or a shared link
+folds it too. Focus moves to the pill when the control holding it folds away. Hidden above 520px.
+
+### League groups and chips
+Labelled groups side by side (Live until …, Always / Leagues, Coming up), the label in pencil
+caps ("Live" in Live Green). Each chip is an outline pill (1px Rule, 40px tall) with a league
+stamp dot, the format's short name and its CP or type list in weight 400 (full colour, so it
+keeps its contrast on the orange fill). Selected: an
+orange fill with ink text, the dot kept with an ink ring. A coming-up chip carries its start date
+as an outlined uppercase badge. Radios are hidden inside the label; focus is a 2px Ember ring.
+While the selected format is live, only the Live group shows, followed by an outline "Show all
+leagues" pill (it becomes "Show only live"); a selected format outside the live group always shows
+every group, and the pill is hidden. Under the row, a hint names the selected format's rules ("**Great League (Megas):** 1,500 CP cap.
+Mega Pokémon are allowed."), so look-alike formats are told apart. A first visit opens on the
+format live in GO Battle League this week, if one is offered. When a league change drops picks, a notice under the row names them ("**Groudon** and **Dialga**
+aren't ranked in Great League, so they were removed.") with a "Back to …" outline pill beside it.
 
 ### Quick picks
-Pill buttons, 32px tall, transparent; border turns blue on hover.
+A "Popular picks" label in pencil caps on its own line, then a row of 32px outline pills (40px on
+phones); hover turns the border to ink. On phones the row scrolls sideways, bleeding to the sheet
+edge with its right edge faded out, so the cut-off chip reads as "more".
 
 ### Search combobox
-Field with 8px corners and a clear (×) button; 2px blue focus outline. The dropdown is a Sheet
-with the one shadow; the active row gets a 14% blue tint. Rows show icon, name, types and rank.
-Up to three fields side by side on desktop, stacked on phones; the third appears once two are
-picked. A field's list leaves out the other picks' species and, once a Mega is picked, every
-other Mega. With all three picked the team style fieldset is disabled (50% opacity) with a
-muted note under it saying why, and the results open as "Your team" with no team list.
+A 48px pill field on Field tone with a hairline border and a round clear button; focus is a 2px
+Ember ring with a 2px offset, the caret is Ember. The dropdown is a 12px sheet with the Float
+shadow and a thin scrollbar; rows (8px corners) show the icon, name, type chips and rank, and the
+active or hovered row takes a 16% orange wash. Up to three fields side by side, stacked on
+phones; the third appears once two are picked.
 
-### Top teams
-A panel with a blue-tinted border holding three team buttons (icons, names, score); one column
-on phones. It is the empty state before any pick, and stays below the results after.
+### Options row and "What do these mean?"
+Above a hairline: the Team style segmented pills (selected orange), the "Use Elite moves"
+checkbox (orange accent), and a disclosure whose summary is an underlined Ember link. Open, it is
+a definition list (terms in ink 600, definitions in pencil). With three picks the style fieldset
+dims to 50% with a pencil note saying why.
 
-### Options row
-Team style chips, the Elite moves checkbox and a "What do these mean?" disclosure on one row
-above a 1px rule; the disclosure opens a definition list explaining each choice.
+### Team rows
+Suggestions and top teams share one pattern: a list of full-width hairline rows,
+each a button with a 30px rank disc ("1", pencil), overlapping 36px icons, names (500), the
+layout tag (outline pill, 12px) and the score (600). Selected: an orange rank disc with ink text
+and an 8% orange wash, no border. Hover: a 4% ink wash (12% orange when selected). In suggestion
+rows the viewer's own picks are pencil 400, so the new partners stand out in ink.
+In results the five suggestions stay in view above the selected team block at every width: with
+one or two picks they are the choice the viewer is making (a folded "other teams" disclosure was
+tried and dropped for hiding it). The results head pairs the heading with the orange "Copy link" pill.
 
-### Team list
-Full-width rows: rank dot, icons (overlapping by 6px), names, layout tag (ABC / ABB / ABA), score.
-Selected (`aria-pressed`): blue border, 10% blue tint, blue rank dot.
+### Team block
+The signature: a charcoal band with 12px corners. Head: the score (40px) with "of 100" under it;
+the names (24px; 20px on phones); "Has a winning answer to **N of the top 100** Pokémon in
+●League", the league name led by its stamp dot; the layout note as a hint. The block has no actions of its own (sharing is the
+"Copy link" pill above it). In dark mode it carries the 3px orange top inset.
 
-### Team header
-Above the member cards: the score (32px) with "of 100" under it, then the team's names (20px),
-"Has a winning answer to N of the top 100 Pokémon in …" with the figure in bold, and the layout
-note as a hint. 24px above, 16px below.
-
-### Meta grid
-"Against the top 30": the league's top 30 threats in rank order, 15 across on desktop, 10 on
-tablets, 6 on phones. Each square cell holds the icon (70%), its meta rank (12px, top left) and
-the band tint. A tally with swatches (wins, toss-ups, losses) sits right of the heading. Tapping
-a cell outlines it in the accent and writes the threat, its types, the team's best answer and
-the verdict in the note below. Press: scale 0.95 over 120ms on a strong ease-out; none with
-reduced motion.
-
-### How to play it
-After the meta grid: a `<details>` (open by default, remembered when closed) whose summary holds
-the h3 and the accent disclosure arrow, then a numbered list of up to five plain sentences (Pokémon names bold),
-and a hint saying they come from simulated 1-1 shield battles against the top 30. No icons or
-colour; it reads as notes.
-
-### Recovery fixes
-A message that describes a dead end (error, notice or placeholder in the results panel) is
-followed by a row of ordinary chips that fix it in one tap: remove a Mega, go back to the
-previous league, try another team style, reload. Plain labels naming the action; no icons,
-no colour beyond the chip.
-
-### Saved teams
-"Save team" is a chip in the team header's action row (`aria-pressed`; "Saved" in the accent when
-on). "Your saved teams" is a panel between results and top teams, hidden when empty: rows like
-the team list (icons, names, format, score) with a separate "Remove" button; on phones the names
-wrap to their own line. A team from a cup that has ended stays listed, dimmed, removable only.
-
-### Comparison
-"Compare with" is a select under the team header listing the other suggestions. Choosing one
-opens a 10px bordered block: a three-row table (score, winning answers, top-30 tally; 14px,
-tabular, right-aligned figures, muted row labels), a one-line hint, and two lists of 32px icons,
-"#A does better against" and "#B does better against", each item naming the threat and both
-teams' results ("#1: win · #3: toss-up"). Teams are always named by number, never "here". On phones the lists stack and the select
-takes the full width.
-
-### Member card
-10px card: 64px icon, role label in accent caps followed by a one-line plain note of what the
-role does (muted, sentence case), name, type chips, PvPoke rank link, then a
-definition list of moves (Elite and Mega tags), IVs, and a collapsible "Check your IVs".
-On phones (≤720px) each card starts as one line, a button with `aria-expanded`: 40px icon, name,
-role in accent caps, and the moves on a muted line (ellipsis when long), with an accent chevron
-that turns down when open. Tapping it shows the full card below without repeating the icon and
-name. Desktop always shows the full cards.
-
-### Report
-Under the member cards, two columns (one on phones): **Closest matchups**, the three top-30
-threats with the team's lowest best rating (32px icon, name, types, best answer and verdict), and
-**Shared weaknesses**, one row per attack type that hits two or more members super-effectively:
-its type chip, then the members it hits ("Morpeko (Full Belly) and Medicham", "(all three)"). The grid covers
-the rest, so there is no separate strengths list.
+### Member cards
+Three raised cards (band-raised, 8px, 16px padding) under the head. Each: the play-order counter
+"01" / "02" / "03" in pencil 12px (the only zero-padded number on the page), the role in Platypi italic Ember, a role note in pencil (held to two lines tall on desktop so the three cards line up), then a
+64px icon with the name (16px 600), type chips and the PvPoke rank ("**Ranked #52** of 1154 on
+PvPoke (score 89.4)", the rank an Ember link), a definition list of
+moves (type dot, name, Elite or Mega tag) and Rank 1 IVs labelled "Atk 1 · Def 15 · HP 15" in
+the figures face, and a "Check your
+IVs" disclosure with three tabular inputs. On ≤720px each card starts as one 64px-tall line
+button: 44px icon, slot counter, name, the italic role on its own line and the moves on a
+pencil line that wraps (never cut off), with an Ember chevron that turns down when open; the body below does not repeat the
+icon, name, slot or role.
 
 ### Move tags
-Elite (needs an Elite TM or Community Day) is outlined in the accent; Mega (a bonus third charged
-move) is filled with it. Both 12px, 600, 4px corners.
+Elite (needs an Elite TM or Community Day) is an Ember outlined pill; Mega (a bonus third
+charged move) is a filled orange pill with ink text. Both 12px, 600.
+
+### Meta grid
+"Against the top *30*": square 8px cells, 15 / 10 / 6 across, each with the icon (72%), its rank
+in ink 12px on a small sheet-coloured tab top left (readable on every tint), and the band tint.
+A tally of swatches sits beside the heading, and a hint under it says these are the 30 met most
+often, out of the 100 the team score counts. Before the grid, a "Skip the 30 Pokémon" outline pill is visually hidden until it has keyboard
+focus, and moves focus past the grid. A tapped or focused cell gets a 2px Ember outline
+and writes the threat, its best answer and the verdict in a full-width note row that moves to
+just under the tapped cell's row. Hover turns the border to the full band colour.
+
+### How to play it
+A disclosure under a hairline whose summary is the "How to *play* it" heading with an Ember
+arrow. Numbered notes, "1", "2"… in pencil, capped at 62ch (about 75 characters of Be Vietnam Pro), up to five plain sentences with Pokémon names in
+bold, then a hint on where they come from. No icons, no colour.
+
+### Report
+Two columns under a hairline (one on phones): **Closest matchups** (32px icon, name, type chips,
+best answer and verdict) and **Shared weaknesses** (a type chip and the members it hits).
+
+### Recovery fixes
+A dead-end message (error, notice or placeholder) is followed by a row of ordinary outline chips
+that fix it in one tap. Plain action labels, no icons, no colour beyond the chip.
 
 ### Interaction layer
-- **Focus:** every button, summary, link and select gets a 2px accent outline, 2px offset.
-- **Press:** chips, league and style labels, team rows and top teams scale to 0.97 (grid cells
-  0.95) over 120ms on `cubic-bezier(0.23, 1, 0.32, 1)`; nothing moves with reduced motion.
-- **Hover:** border turns to the accent, only under `(hover: hover)` so taps don't stick.
-- **Busy:** a new search dims the current results to 50% (150ms) with `aria-busy` until the new
-  teams replace them; the "Finding…" message only shows when nothing is on screen yet.
-- **Browser parts:** `accent-color`, caret, `::selection` (28% accent), disclosure markers and the
-  dropdown scrollbar take the league accent; links underline 2px below the text.
+- **Focus:** buttons, summaries, links, selects, inputs and grid cells get a 2px Ember outline.
+- **Press:** chips, pills and team rows scale to 0.97 (grid cells 0.95) over 120ms on
+  `cubic-bezier(0.23, 1, 0.32, 1)`.
+- **Hover** (only under `hover: hover`): outline pills turn their border to ink; the primary pill
+  swaps orange and ink; rows take a faint wash.
+- **Busy:** a new search dims the current results to 50% (150ms) until the new teams arrive.
+- **Reduced motion:** no transitions, presses or arrow rotations.
+
+### Footer band
+A charcoal band 32px below the column: "Pv*Pancham*" in ink 16px 600, then the credits in pencil
+14px with links in the band's ink.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep every colour on a CSS custom property, defined for light and dark.
-- **Do** keep text in Ink on type tints; the type colour is the tint, never the text.
-- **Do** use tabular figures for anything compared across rows.
-- **Do** keep tap targets at 32px or more.
+- **Do** keep every colour on a custom property, defined for light and dark, and let `.band`
+  redefine them for charcoal regions.
+- **Do** put ink text on every orange fill, and use Ember for orange text or lines on light
+  grounds.
+- **Do** mark selection with orange and league identity with a stamp dot, never the reverse.
+- **Do** set columns of figures that must align in the system face with `tabular-nums`
+  (`--figures`).
+- **Do** keep text in ink on type tints; the type colour is the tint or the dot, never the text.
+- **Do** keep tap targets at 32px or more, and controls as full pills.
 
 ### Don't:
-- **Don't** add shadows to resting surfaces.
-- **Don't** add a second interactive colour beside Notebook Blue.
-- **Don't** add web fonts or third-party assets; the site never fetches third-party URLs.
+- **Don't** add shadows to resting surfaces; only the floating dropdown casts one.
+- **Don't** use orange for decoration beyond the Pancham disc, or a league colour for selection.
+- **Don't** put a game type colour behind an action as a fill, even Fighting.
+- **Don't** set more than one Platypi italic word in a heading, or names, numbers, moves or data
+  in the serif.
+- **Don't** load fonts or any asset from a third-party URL; fonts are self-hosted from `fonts/`
+  under the OFL.
 - **Don't** use Niantic or The Pokémon Company branding beyond the credited icons.

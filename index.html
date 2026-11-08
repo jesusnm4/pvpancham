@@ -5,41 +5,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PvPancham · Pokémon GO PvP team builder</title>
   <meta name="description" content="Build Pokémon GO PvP teams: suggested partners, moves, IVs, strengths and weaknesses.">
-  <script src="js/theme.js?v=20261030n"></script>
-  <link rel="stylesheet" href="styles.css?v=20261030n">
+  <script src="js/theme.js?v=20261108f"></script>
+  <link rel="stylesheet" href="styles.css?v=20261108f">
 </head>
 <body>
-  <header class="site-header">
-    <div class="brand">
-      <img src="img/pokemon/pm674.webp" alt="" width="48" height="48">
-      <div>
-        <h1>PvPancham</h1>
-        <p class="tagline">Pokémon GO PvP team builder</p>
+  <header class="site-header band">
+    <div class="wrap">
+      <div class="brand">
+        <span class="disc"><img src="img/pokemon/pm674.webp" alt="" width="60" height="60"></span>
+        <div>
+          <h1>Pv<em class="v">Pancham</em></h1>
+          <p class="tagline">Pokémon GO PvP team builder</p>
+        </div>
       </div>
+      <label class="theme-picker">
+        <span class="theme-label">Theme</span>
+        <select id="theme">
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
     </div>
-    <label class="theme-picker">
-      <span class="theme-label">Theme</span>
-      <select id="theme">
-        <option value="system">System</option>
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </select>
-    </label>
   </header>
 
   <main>
-    <section class="panel form">
+    <section class="panel form" id="form">
+      <!-- Phones, once something is picked: the choices in one line, so the team comes first. -->
+      <div class="form-summary" id="form-summary" hidden>
+        <p id="form-summary-text"></p>
+        <button type="button" class="chip" id="form-add" hidden>+ Add Pokémon</button>
+        <button type="button" class="chip" id="form-toggle" aria-expanded="false" aria-controls="form-body">Edit</button>
+      </div>
+      <div class="form-body" id="form-body">
       <fieldset class="league">
         <legend>League or cup</legend>
         <!-- Filled from data/formats.js: the open leagues plus cups in the GO Battle League schedule,
              grouped as live this week, always on, and coming up. -->
         <div class="league-row" id="league-options"></div>
+        <button type="button" class="chip league-more" id="league-more" aria-controls="league-options" aria-expanded="false" hidden>Show all leagues</button>
+        <p class="hint league-rules" id="league-rules"></p>
+        <div class="league-notice" id="league-notice" aria-live="polite" hidden></div>
         <p class="hint gbl-week" id="gbl-week" hidden></p>
       </fieldset>
 
       <fieldset class="your-picks">
         <legend>Your Pokémon</legend>
-        <p class="hint">Pick one and get two partners, pick two and get the best third, or pick three to check a team you have in mind.</p>
+        <p class="hint">Pick one or two and get the rest of the team, or three to check yours.</p>
         <div class="picks">
           <div class="combo" data-slot="0">
             <label for="pick-0">First Pokémon</label>
@@ -94,38 +106,38 @@
           </dl>
         </details>
       </div>
+      </div>
     </section>
 
     <section class="panel results" id="results" aria-live="polite">
       <p class="placeholder">Loading Pokémon data…</p>
     </section>
 
-    <!-- Teams the viewer saved on this device (localStorage); hidden while there are none. -->
-    <section class="panel saved-teams" id="saved-teams" aria-labelledby="saved-teams-title" hidden>
-      <h2 id="saved-teams-title">Your saved teams</h2>
-      <ul class="saved-list" id="saved-list"></ul>
-    </section>
-
     <!-- With no picks this sits right under the form as the starting point; with picks, below the results. -->
     <section class="panel top-teams" id="top-teams" aria-labelledby="top-teams-title">
-      <h2 id="top-teams-title">Top teams</h2>
+      <h2 id="top-teams-title">Top <em class="v">teams</em></h2>
       <p class="hint" id="top-teams-hint">Ranking teams…</p>
       <ol class="top-list" id="top-list"></ol>
     </section>
   </main>
 
-  <footer class="site-footer">
-    Data and rankings from <a href="https://pvpoke.com">PvPoke</a> (MIT License)<span id="data-date"></span>.
-    <span id="schedule-credit" hidden>GO Battle League schedule from the Pokémon GO game master via <a id="schedule-source" href="#"></a><span id="schedule-end"></span>.</span>
-    Pokémon images from Pokémon GO via <a href="https://github.com/PokeMiners/pogo_assets">PokeMiners</a>, © Niantic and The Pokémon Company.
-    Unofficial fan project; Pokémon and Pokémon GO are trademarks of their respective owners.
+  <footer class="site-footer band">
+    <div class="wrap">
+      <p class="footer-name">Pv<em class="v">Pancham</em></p>
+      <p>
+      Data and rankings from <a href="https://pvpoke.com">PvPoke</a> (MIT License)<span id="data-date"></span>.
+      <span id="schedule-credit" hidden>GO Battle League schedule from the Pokémon GO game master via <a id="schedule-source" href="#"></a><span id="schedule-end"></span>.</span>
+      Pokémon images from Pokémon GO via <a href="https://github.com/PokeMiners/pogo_assets">PokeMiners</a>, © Niantic and The Pokémon Company.
+      Unofficial fan project; Pokémon and Pokémon GO are trademarks of their respective owners.
+      </p>
+    </div>
   </footer>
 
   <!-- ?v= on the site's own files: bump it whenever they change, so a browser holding an older
        copy (GitHub Pages lets files be cached for 10 minutes) never mixes old and new scripts. -->
   <script src="data/formats.js"></script>
-  <script src="js/data.js?v=20261030n"></script>
-  <script src="js/engine.js?v=20261030n"></script>
-  <script src="js/app.js?v=20261030n"></script>
+  <script src="js/data.js?v=20261108f"></script>
+  <script src="js/engine.js?v=20261108f"></script>
+  <script src="js/app.js?v=20261108f"></script>
 </body>
 </html>

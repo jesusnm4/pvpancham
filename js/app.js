@@ -1,9 +1,7 @@
 // Owns state, form wiring and rendering. Team math lives in js/engine.js, data loading in js/data.js.
 (function () {
   var KEY = 'pvphelper-state-v1';
-  var IV_KEY = 'pvphelper-ivs-v1';
-  var SAVED_KEY = 'pvphelper-saved-v1';   // teams the viewer saved: [{ hash, league, noElite, ids, names, score }]
-  var MAX_SAVED = 12;   // { speciesId: [atk, def, hp] } the viewer entered
+  var IV_KEY = 'pvphelper-ivs-v1';   // { speciesId: [atk, def, hp] } the viewer entered
   // Formats on offer (data/formats.js, from the GO Battle League schedule): the open leagues always,
   // plus cups that are live now or start within UPCOMING_DAYS, by the viewer's clock.
   var UPCOMING_DAYS = 7;
@@ -36,6 +34,8 @@
     AAB: 'the lead and safe swap share a type',
     AAA: 'all three share a type'
   };
+  // Between team members' names: a no-break space before the dot, so no line ever starts with it.
+  var NAME_SEP = '\u00a0· ';
   var ROLE_NAMES = { lead: 'Lead', swap: 'Safe swap', closer: 'Closer' };
   // One line per role, shown on each member card for players who don't know the terms.
   var ROLE_NOTES = {
@@ -57,14 +57,18 @@
   var revealResults = false;  // set by a user pick: scroll new results into view if off-screen
   var fixes = [];             // one-tap fixes offered with the current message: [{ label, run }]
   var leagueUndo = null;      // { league, picks } before the last league change, to undo dropped picks
+  var leagueFixes = [];       // the undo offered beside the league notice: [{ label, run }]
+  var gm = null;              // the gamemaster, once loaded: names for picks a league drops
+  var formOpen = false;       // phones: the viewer opened the folded form with Edit
+  var showAllLeagues = false; // the viewer asked to see every format, not just this week's live ones
   var TOP_COUNT = 3;
   var topTeams = {};   // contextKey -> Engine.bestTeams() for the banner (best score, no typing rule)
   var topRunId = 0;    // ignores a banner search for a league the viewer already left
   var openThird = null;  // a banner team being opened: select the result that has this third member
 
   // ---- Persistence: localStorage remembers the last view; the URL hash makes it shareable ----
-  // Hash format: #l=great&s=abc&p=medicham,azumarill&t=2&c=3 (t is the 1-based selected team, c the
-  // 1-based team it is compared with).
+  // Hash format: #l=great&s=abc&p=medicham,azumarill&t=2 (t is the 1-based selected team). Older links
+  // may carry c= (a comparison, since removed); it is ignored and dropped from the URL.
 
   // Copies the recognised fields of `saved` onto `s`. Pick ids are only checked for shape here;
   // whether they are ranked in the league is checked once rankings load (see validatePicks).
@@ -81,11 +85,6 @@
     if (typeof saved.selected === 'number' && saved.selected >= 0 && saved.selected < 5) s.selected = Math.floor(saved.selected);
     if (typeof saved.noElite === 'boolean') s.noElite = saved.noElite;
     if (typeof saved.pilotHidden === 'boolean') s.pilotHidden = saved.pilotHidden;
-    // The team compared with the selected one (0-based), or null; only set when the source has the field.
-    if ('compare' in saved) {
-      s.compare = typeof saved.compare === 'number' && saved.compare >= 0 && saved.compare < 5 && saved.compare === Math.floor(saved.compare)
-        ? saved.compare : null;
-    }
     return s;
   }
 
@@ -104,8 +103,7 @@
       style: params.get('s'),
       picks: (params.get('p') || '').split(',').filter(Boolean),
       selected: Number(params.get('t')) - 1,
-      noElite: params.get('e') === '0',
-      compare: params.get('c') ? Number(params.get('c')) - 1 : null
+      noElite: params.get('e') === '0'
     };
   }
 
@@ -113,18 +111,23 @@
     var picks = st.picks.filter(Boolean);
     if (!picks.length) return '';
     return '#l=' + st.league + '&s=' + st.style + '&p=' + picks.map(encodeURIComponent).join(',') +
-      (st.selected ? '&t=' + (st.selected + 1) : '') + (st.noElite ? '&e=0' : '') +
-      (st.compare !== null && st.compare !== undefined ? '&c=' + (st.compare + 1) : '');
+      (st.selected ? '&t=' + (st.selected + 1) : '') + (st.noElite ? '&e=0' : '');
+  }
+
+  // A first visit opens on the format live in GO Battle League this week, if the site offers one.
+  function defaultLeague() {
+    var live = FORMATS.filter(function (f) { return liveWeek(f.weeks); })[0];
+    return live ? live.id : 'great';
   }
 
   function load() {
-    var s = { league: 'great', style: 'abc', picks: [null, null, null], selected: 0, noElite: false, compare: null, pilotHidden: false };
+    var s = { league: defaultLeague(), style: 'abc', picks: [null, null, null], selected: 0, noElite: false, pilotHidden: false };
     try {
       applySaved(s, JSON.parse(localStorage.getItem(KEY) || '{}'));
     } catch (e) { /* private mode or bad JSON: keep defaults */ }
     var shared = readHash();
     // A shared link replaces the remembered view entirely, including empty slots.
-    if (shared) applySaved(s, { league: shared.league, style: shared.style, picks: shared.picks, selected: shared.selected, noElite: shared.noElite, compare: shared.compare });
+    if (shared) applySaved(s, { league: shared.league, style: shared.style, picks: shared.picks, selected: shared.selected, noElite: shared.noElite });
     if (shared && shared.league && LEAGUES.indexOf(shared.league) === -1) {
       startNotice = 'That link is for a cup that is no longer in GO Battle League, so it opened in ' + LEAGUE_NAMES[s.league] + '.';
     }
@@ -135,7 +138,7 @@
   function saveLocal() {
     try {
       localStorage.setItem(KEY, JSON.stringify({ league: state.league, style: state.style, picks: state.picks, selected: state.selected,
-        noElite: state.noElite, compare: state.compare, pilotHidden: state.pilotHidden }));
+        noElite: state.noElite, pilotHidden: state.pilotHidden }));
     } catch (e) { /* private mode */ }
   }
 
@@ -192,6 +195,7 @@
   }
 
   function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function twoDigits(n) { return (n < 10 ? '0' : '') + n; }
 
   function typeChips(types) {
     return types.map(function (t) {
@@ -218,6 +222,7 @@
   function contextFor(league) {
     var key = contextKey(league);
     return Promise.all([window.PvpData.gamemaster(), window.PvpData.rankings(league), window.PvpData.images()]).then(function (data) {
+      gm = data[0];
       images = data[2];
       if (!contexts[key]) contexts[key] = window.Engine.createContext(data[0], data[1], LEAGUE_CP[league], { noElite: state.noElite });
       return contexts[key];
@@ -344,6 +349,8 @@
       sync: function () {
         if (document.activeElement !== input) input.value = selectedName();
         clear.hidden = !state.picks[slot];
+        var optional = combo.querySelector('label small');
+        if (optional) optional.hidden = !!state.picks[slot];
       }
     };
   }
@@ -358,14 +365,53 @@
     document.querySelector('.combo[data-slot="2"]').hidden = count < 2;
     document.querySelector('fieldset.style').disabled = count === 3;
     document.getElementById('style-note').hidden = count !== 3;
+    syncForm();
   }
+
+  // On a phone, once something is picked, the form folds to one line (league, picks, style) with
+  // an Edit button, so the team comes first. A pick folds it again unless the viewer opened it
+  // with Edit; then it stays open until Done. Wider screens never fold it (styles.css).
+  function syncForm() {
+    var picks = currentPicks();
+    if (!picks.length) formOpen = false;
+    var collapsed = picks.length > 0 && !formOpen;
+    var form = document.getElementById('form');
+    var body = document.getElementById('form-body');
+    var toggle = document.getElementById('form-toggle');
+    document.getElementById('form-summary').hidden = !picks.length;
+    form.classList.toggle('collapsed', collapsed);
+    toggle.textContent = collapsed ? 'Edit' : 'Done';
+    document.getElementById('form-add').hidden = !collapsed || picks.length >= 3;
+    toggle.setAttribute('aria-expanded', String(!collapsed));
+    var ctx = contexts[contextKey(state.league)];
+    var names = picks.map(function (id) { return ctx && ctx.byId[id] ? ctx.byId[id].pokemon.name : ''; }).filter(Boolean);
+    document.getElementById('form-summary-text').innerHTML = '<strong>' + escapeHtml(LEAGUE_NAMES[state.league]) + '</strong>' +
+      names.map(function (n) { return NAME_SEP + escapeHtml(n); }).join('') +
+      (picks.length < 3 ? NAME_SEP + STYLE_NAMES[state.style] : '');
+    // Focus never stays on a control that just folded away (e.g. the field a pick was made in).
+    if (collapsed && body.contains(document.activeElement) && getComputedStyle(body).display === 'none') toggle.focus();
+  }
+
+  // "+ Add Pokémon": opens the form straight on the next empty field.
+  document.getElementById('form-add').addEventListener('click', function () {
+    formOpen = true;
+    syncForm();
+    var input = document.getElementById('pick-' + currentPicks().length);
+    if (input) { input.focus(); input.scrollIntoView({ block: 'center' }); }
+  });
+
+  document.getElementById('form-toggle').addEventListener('click', function () {
+    formOpen = !formOpen;
+    syncForm();
+    var summary = document.getElementById('form-summary');
+    if (!formOpen && summary.getBoundingClientRect().top < 0) summary.scrollIntoView({ block: 'start' });
+  });
 
   function setPick(slot, id) {
     state.picks[slot] = id;
     // Keep the filled slots first, so "one pick" always means slot 0.
     state.picks = compactPicks(state.picks);
     state.selected = 0;
-    state.compare = null;
     save();
     syncCombos();
     renderQuickPicks();
@@ -387,10 +433,10 @@
     if (!ctx || currentPicks().length >= 2) { el.innerHTML = ''; return; }
     var taken = currentPicks().map(function (id) { return ctx.byId[id].pokemon.dex; });
     var top = ctx.ranked.filter(function (e) { return taken.indexOf(e.pokemon.dex) === -1; }).slice(0, QUICK_PICKS);
-    el.innerHTML = '<span class="quick-label">Popular in ' + LEAGUE_NAMES[state.league] + ':</span> ' +
+    el.innerHTML = '<p class="quick-label">Popular picks</p><div class="quick-row">' +
       top.map(function (e) {
         return '<button type="button" class="chip" data-id="' + escapeHtml(e.id) + '">' + escapeHtml(e.pokemon.name) + '</button>';
-      }).join('');
+      }).join('') + '</div>';
   }
 
   document.getElementById('quick-picks').addEventListener('click', function (ev) {
@@ -423,6 +469,27 @@
     }).join('') + '</p>';
   }
 
+  // Picks a league change dropped, named, under the league row with the undo beside them.
+  function showLeagueNotice(html, actions) {
+    var el = document.getElementById('league-notice');
+    leagueFixes = actions || [];
+    el.hidden = !html;
+    el.innerHTML = html ? '<p>' + html + '</p>' + leagueFixes.map(function (f, i) {
+      return '<button type="button" class="chip" data-lfix="' + i + '">' + escapeHtml(f.label) + '</button>';
+    }).join('') : '';
+  }
+
+  document.getElementById('league-notice').addEventListener('click', function (ev) {
+    var btn = ev.target.closest('button[data-lfix]');
+    var f = btn && leagueFixes[Number(btn.dataset.lfix)];
+    if (f) f.run();
+  });
+
+  function pickName(id) {
+    var p = gm && gm.pokemonById[id];
+    return p ? p.name : id;
+  }
+
   function isMegaId(ctx, id) {
     var e = ctx.byId[id];
     return !!(e && e.pokemon.tags && e.pokemon.tags.indexOf('mega') !== -1);
@@ -431,7 +498,6 @@
   function setStyle(style) {
     state.style = style;
     state.selected = 0;
-    state.compare = null;
     save();
     syncRadios();
     runSearch();
@@ -448,17 +514,14 @@
     contextFor(league).then(function (ctx) {
       if (id !== runId) return;
       var dropped = validatePicks(ctx);
-      syncCombos();
-      renderQuickPicks();
       if (dropped.length) {
-        notice = dropped.length === 1 ? 'Your previous pick isn’t ranked in ' + LEAGUE_NAMES[league] + ', so it was removed.'
-          : 'Your previous picks aren’t ranked in ' + LEAGUE_NAMES[league] + ', so they were removed.';
+        formOpen = true;   // keep the notice and its undo in view on a phone
+        var undoActions = [];
         if (undo && undo.league !== league && LEAGUES.indexOf(undo.league) !== -1) {
-          actions.push({ label: 'Back to ' + LEAGUE_NAMES[undo.league], run: function () {
+          undoActions.push({ label: 'Back to ' + LEAGUE_NAMES[undo.league], run: function () {
             state.league = undo.league;
             state.picks = undo.picks.slice();
             state.selected = 0;
-            state.compare = null;
             save();
             syncRadios();
             revealLeague();
@@ -469,7 +532,14 @@
             renderTopTeams();
           } });
         }
+        showLeagueNotice(englishList(dropped.map(function (p) { return '<strong>' + escapeHtml(pickName(p)) + '</strong>'; })) +
+          (dropped.length === 1 ? ' isn’t ranked in ' + escapeHtml(LEAGUE_NAMES[league]) + ', so it was removed.'
+            : ' aren’t ranked in ' + escapeHtml(LEAGUE_NAMES[league]) + ', so they were removed.'), undoActions);
+      } else {
+        showLeagueNotice('');
       }
+      syncCombos();
+      renderQuickPicks();
       var picks = currentPicks();
       if (!picks.length) {
         teams = [];
@@ -524,35 +594,29 @@
   }
 
   function renderTeams(ctx, notice, actions) {
-    // A link or saved view can name a comparison that no longer fits the results.
-    if (state.compare !== null && (state.compare >= teams.length || state.compare === state.selected)) { state.compare = null; save(); }
     described = teams.map(function (t) { return window.Engine.describeTeam(ctx, t); });
     var picks = currentPicks();
     var own = picks.length === 3;   // the viewer's own team: no list of alternatives
-    var heading = own ? 'Your team'
-      : picks.length === 1 ? 'Best partners for ' + escapeHtml(ctx.byId[picks[0]].pokemon.name)
-      : 'Best third for ' + escapeHtml(ctx.byId[picks[0]].pokemon.name) + ' and ' + escapeHtml(ctx.byId[picks[1]].pokemon.name);
+    var heading = own ? 'Your <em class="v">team</em>'
+      : picks.length === 1 ? 'Best <em class="v">partners</em> for ' + escapeHtml(ctx.byId[picks[0]].pokemon.name)
+      : 'Best <em class="v">third</em> for ' + escapeHtml(ctx.byId[picks[0]].pokemon.name) + ' and ' + escapeHtml(ctx.byId[picks[1]].pokemon.name);
 
-    var list = described.map(function (d, i) {
-      return '<li><button type="button" class="team-option" data-team="' + i + '" aria-pressed="' + (i === state.selected) + '">' +
-        '<span class="team-rank">' + (i + 1) + '</span>' +
-        '<span class="team-icons">' + d.members.map(function (m) { return icon(m.id, 32); }).join('') + '</span>' +
-        '<span class="team-names">' + d.members.map(function (m) { return escapeHtml(m.name); }).join(' · ') + '</span>' +
-        // With the ABC style every team is ABC, so the tag would only repeat itself.
-        (state.style === 'abc' ? '' : '<span class="layout" title="Typing layout (lead / safe swap / closer)">' + d.layout + '</span>') +
-        '<span class="team-score" title="Team score out of 100">' + d.displayScore + '</span></button></li>';
-    }).join('');
 
+    // The league is named in the team block (and the form), so the hint only adds what isn't shown.
+    var bits = [];
+    if (!own) bits.push(STYLE_HINTS[state.style]);
+    if (state.noElite) bits.push('without Elite TM moves');
+    var settings = bits.length ? capitalize(bits.join(', ')) + '. ' : '';
     notBusy();
     resultsEl().hidden = false;
     resultsEl().innerHTML =
       (notice ? '<p class="notice">' + escapeHtml(notice) + '</p>' + fixButtons(actions) : fixButtons([])) +
       '<div class="results-head"><h2>' + heading + '</h2>' +
-      '<button type="button" class="chip" data-action="share">Copy link</button></div>' +
-      '<p class="hint">' + LEAGUE_NAMES[state.league] + (own ? '' : ', ' + STYLE_HINTS[state.style]) + (state.noElite ? ', without Elite TM moves' : '') +
-      '. Team score (out of 100) rates how well the team covers the top 100 Pokémon in ' + LEAGUE_NAMES[state.league] + '.' +
+      '<button type="button" class="chip primary" data-action="share">Copy link</button></div>' +
+      '<p class="hint">' + settings + 'Score out of 100: how well the team covers the top 100 Pokémon.' +
       (own ? ' Roles are set from each Pokémon’s PvPoke role scores.' : '') + '</p>' +
-      (own ? '' : '<ol class="team-list">' + list + '</ol>') +
+      // The suggestions are the choice the viewer is making, so they stay in view above the team.
+      (own ? '' : '<ol class="team-list">' + described.map(teamRow).join('') + '</ol>') +
       '<div id="team-detail">' + renderDetail(described[state.selected]) + '</div>';
     // On a phone the results start below the fold, and a top team is opened from below them;
     // after a pick, bring them into view.
@@ -561,6 +625,20 @@
       var top = resultsEl().getBoundingClientRect().top;
       if (top > window.innerHeight * 0.6 || top < 0) resultsEl().scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  }
+
+  // One suggested team as a row. The viewer's own picks are muted, so the new partners stand out.
+  function teamRow(d, i) {
+    var picks = currentPicks();
+    return '<li><button type="button" class="team-option" data-team="' + i + '" aria-pressed="' + (i === state.selected) + '">' +
+      '<span class="team-rank">' + (i + 1) + '</span>' +
+      '<span class="team-icons">' + d.members.map(function (m) { return icon(m.id, 32); }).join('') + '</span>' +
+      '<span class="team-names">' + d.members.map(function (m) {
+        return '<span' + (picks.indexOf(m.id) !== -1 ? ' class="pick"' : '') + '>' + escapeHtml(m.name) + '</span>';
+      }).join(NAME_SEP) + '</span>' +
+      // With the ABC style every team is ABC, so the tag would only repeat itself.
+      (state.style === 'abc' ? '' : '<span class="layout" title="Typing layout (lead / safe swap / closer)">' + d.layout + '</span>') +
+      '<span class="team-score" title="Team score out of 100">' + d.displayScore + '</span></button></li>';
   }
 
   function ivChecker(m) {
@@ -589,6 +667,7 @@
   function renderDetail(d) {
     var members = d.members.map(function (m, i) {
       var fast = m.moves[0], charged = m.moves.slice(1);
+      var slot = twoDigits(i + 1);   // 01, 02, 03: the order they play in, the one zero-padded count on the page
       function move(mv) {
         return '<li>' + (mv.type ? '<span class="type dot" data-type="' + escapeHtml(mv.type) + '" title="' + escapeHtml(capitalize(mv.type)) + '"></span>' : '') +
           escapeHtml(mv.name) + (mv.elite ? ' <abbr class="elite" title="Needs an Elite TM or a Community Day">Elite</abbr>' : '') +
@@ -597,24 +676,25 @@
       // On a phone each member is one line (icon, name, role, moves) that opens to the full card.
       return '<article class="member">' +
         '<button type="button" class="member-line" aria-expanded="false" aria-controls="member-' + i + '">' + icon(m.id, 40) +
-        '<span><span class="member-name">' + escapeHtml(m.name) + '</span> <span class="role">' + ROLE_NAMES[m.role] + '</span>' +
+        '<span><span class="slot">' + slot + '</span><span class="member-name">' + escapeHtml(m.name) + '</span> <span class="role">' + ROLE_NAMES[m.role] + '</span>' +
         '<small>' + escapeHtml(fast.name) + ' · ' + charged.map(function (mv) { return escapeHtml(mv.name); }).join(', ') + '</small></span>' +
         '<span class="chev" aria-hidden="true"></span></button>' +
         '<div class="member-body" id="member-' + i + '">' +
+        '<p class="slot">' + slot + '</p><p class="role">' + ROLE_NAMES[m.role] + '</p>' +
+        '<p class="role-note">' + ROLE_NOTES[m.role] + '</p>' +
         '<div class="member-head">' + icon(m.id, 64) + '<div>' +
-        '<p class="role">' + ROLE_NAMES[m.role] + ' <span class="role-note">' + ROLE_NOTES[m.role] + '</span></p>' +
         '<h3>' + escapeHtml(m.name) + '</h3>' +
         '<p class="types">' + typeChips(m.types) + '</p>' +
         '<p class="pvp-rank"><a href="https://pvpoke.com/rankings/' + LEAGUE_CUP[state.league] + '/' + LEAGUE_CP[state.league] + '/overall/' +
-        encodeURIComponent(m.id) + '/" target="_blank" rel="noopener" title="Open in PvPoke">PvPoke #' + m.rank + '</a>' +
-        ' <small>of ' + m.rankedCount + ' · score ' + m.rankScore.toFixed(1) + '</small></p>' +
+        encodeURIComponent(m.id) + '/" target="_blank" rel="noopener" title="Open in PvPoke">Ranked #' + m.rank + '</a>' +
+        ' <small>of ' + m.rankedCount + ' on PvPoke (score ' + m.rankScore.toFixed(1) + ')</small></p>' +
         '</div></div>' +
         '<dl>' +
         '<dt>Fast move</dt><dd><ul class="moves">' + move(fast) + '</ul></dd>' +
         '<dt>Charged moves</dt><dd><ul class="moves">' + charged.map(move).join('') + '</ul></dd>' +
         (m.withoutElite.length ? '<dd class="swapped">Instead of ' + m.withoutElite.map(escapeHtml).join(', ') +
           ' <small>(Elite TM)</small></dd>' : '') +
-        '<dt>Rank 1 IVs</dt><dd><span class="ivs" title="Attack / Defense / HP">' + m.ivs.atk + ' / ' + m.ivs.def + ' / ' + m.ivs.hp +
+        '<dt>Rank 1 IVs</dt><dd><span class="ivs">Atk ' + m.ivs.atk + ' · Def ' + m.ivs.def + ' · HP ' + m.ivs.hp +
         '</span><br><small>Level ' + m.ivs.level + ' · CP ' + m.ivs.cp + '</small></dd>' +
         '</dl>' + ivChecker(m) + '</div></article>';
     }).join('');
@@ -622,8 +702,8 @@
     function threatList(items) {
       return '<ol class="threats">' + items.map(function (t) {
         return '<li>' + icon(t.id, 32) + '<div><span class="threat-name">' + escapeHtml(t.name) + '</span> ' + typeChips(t.types) +
-          '<br><small>Best answer ' + escapeHtml(t.answer) + ': ' +
-          '<span class="verdict" title="Battle rating ' + t.rating + ' (500 is even)">' + verdict(t.rating) + '</span></small></div></li>';
+          '<br><small>Best answer: ' + escapeHtml(t.answer) + ' (' +
+          '<span class="verdict" title="Battle rating ' + t.rating + ' (500 is even)">' + verdict(t.rating) + '</span>)</small></div></li>';
       }).join('') + '</ol>';
     }
 
@@ -635,18 +715,18 @@
         }).join('') + '</ul>'
       : '<p class="shared">No attack type hits two of your Pokémon super-effectively.</p>';
 
-    var layoutNote = LAYOUT_NOTES[d.layout] ? 'Layout <strong>' + d.layout + '</strong>: ' + LAYOUT_NOTES[d.layout] + '.' : '';
-    return '<div class="team-head">' +
+    // Under the ABC style every suggestion is ABC, so the note would only repeat the choice.
+    var layoutNote = LAYOUT_NOTES[d.layout] && !(state.style === 'abc' && currentPicks().length < 3) ? 'Layout <strong>' + d.layout + '</strong>: ' + LAYOUT_NOTES[d.layout] + '.' : '';
+    // The team block: score, names, actions and the three members on charcoal; the analysis follows.
+    return '<div class="team-block band"><div class="team-head">' +
       '<p class="team-figure" title="Team score out of 100"><b>' + d.displayScore + '</b><small>of 100</small></p>' +
-      '<div><h3>' + d.members.map(function (m) { return escapeHtml(m.name); }).join(' · ') + '</h3>' +
+      '<div><h3>' + d.members.map(function (m) { return escapeHtml(m.name); }).join(NAME_SEP) + '</h3>' +
       '<p class="coverage">Has a winning answer to <strong>' + d.beats + ' of the top ' + d.threatCount +
-      '</strong> Pokémon in ' + LEAGUE_NAMES[state.league] + '.</p>' +
-      (layoutNote ? '<p class="hint">' + layoutNote + '</p>' : '') +
-      '<div class="team-actions">' + saveButton(d) + compareControl() + '</div></div></div>' +
-      compareBlock(d) +
+      '</strong> Pokémon in <span class="stamp">' + LEAGUE_NAMES[state.league] + '</span>.</p>' +
+      (layoutNote ? '<p class="hint">' + layoutNote + '</p>' : '') + '</div></div>' +
+      '<div class="members">' + members + '</div></div>' +
       metaGrid(d.meta) +
       pilotNotes(d) +
-      '<div class="members">' + members + '</div>' +
       // The grid above shows every top-30 matchup; this names the three closest, which decide games.
       '<div class="report">' +
       '<section><h3>Closest matchups</h3><p class="hint">The top-30 threats your team has the hardest time with, even if it still wins them.</p>' +
@@ -691,7 +771,7 @@
         ' super-effectively.');
     });
     // Open unless the viewer closed it; the choice is remembered (state.pilotHidden).
-    return '<details class="pilot"' + (state.pilotHidden ? '' : ' open') + '><summary><h3>How to play it</h3></summary>' +
+    return '<details class="pilot"' + (state.pilotHidden ? '' : ' open') + '><summary><h3>How to <em class="v">play</em> it</h3></summary>' +
       '<ol>' + notes.map(function (n) { return '<li>' + n + '</li>'; }).join('') + '</ol>' +
       '<p class="hint">From simulated battles with one shield each, against the top 30 in ' + escapeHtml(LEAGUE_NAMES[state.league]) + '.</p></details>';
   }
@@ -706,167 +786,6 @@
     saveLocal();
   }, true);
 
-  // ---- Saved teams: kept on this device, reopened through their link ----
-
-  function loadSaved() {
-    try {
-      var list = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]');
-      if (!Array.isArray(list)) return [];
-      // Keep only well-formed entries; anything else is dropped rather than trusted.
-      return list.filter(function (t) {
-        return t && typeof t.hash === 'string' && /^#l=/.test(t.hash) && typeof t.league === 'string' &&
-          Array.isArray(t.ids) && t.ids.length === 3 && t.ids.every(function (id) { return typeof id === 'string' && PICK_ID.test(id); }) &&
-          Array.isArray(t.names) && t.names.length === 3 && t.names.every(function (n) { return typeof n === 'string'; }) &&
-          typeof t.score === 'number' && typeof t.noElite === 'boolean';
-      }).slice(0, MAX_SAVED);
-    } catch (e) { return []; }
-  }
-
-  function storeSaved(list) {
-    try { localStorage.setItem(SAVED_KEY, JSON.stringify(list)); } catch (e) { /* private mode */ }
-  }
-
-  // The same three Pokémon in the same format and Elite setting count as one saved team.
-  function savedKey(league, noElite, ids) { return league + (noElite ? ':noelite' : '') + ':' + ids.slice().sort().join(','); }
-
-  function savedIndex(d) {
-    var key = savedKey(state.league, state.noElite, d.members.map(function (m) { return m.id; }));
-    var list = loadSaved();
-    for (var i = 0; i < list.length; i++) if (savedKey(list[i].league, list[i].noElite, list[i].ids) === key) return i;
-    return -1;
-  }
-
-  function saveButton(d) {
-    var saved = savedIndex(d) !== -1;
-    return '<button type="button" class="chip" data-action="save-team" aria-pressed="' + saved + '">' +
-      (saved ? 'Saved' : 'Save team') + '</button>';
-  }
-
-  function toggleSaved(d) {
-    var list = loadSaved(), i = savedIndex(d);
-    if (i !== -1) list.splice(i, 1);
-    else {
-      // The link reopens this exact view: the picks, the style, and this team selected.
-      list.unshift({ hash: hashFor(Object.assign({}, state, { compare: null })), league: state.league, noElite: state.noElite,
-        ids: d.members.map(function (m) { return m.id; }), names: d.members.map(function (m) { return m.name; }), score: d.displayScore });
-    }
-    storeSaved(list.slice(0, MAX_SAVED));
-    renderSaved();
-  }
-
-  function renderSaved() {
-    var list = loadSaved();
-    var panel = document.getElementById('saved-teams');
-    panel.hidden = !list.length;
-    document.getElementById('saved-list').innerHTML = list.map(function (t, i) {
-      var live = LEAGUES.indexOf(t.league) !== -1;
-      var where = live ? escapeHtml(LEAGUE_NAMES[t.league]) + (t.noElite ? ', without Elite moves' : '')
-        : 'A cup that is no longer in GO Battle League';
-      return '<li class="saved' + (live ? '' : ' ended') + '">' +
-        (live ? '<button type="button" class="saved-open" data-saved="' + i + '">' : '<div class="saved-open">') +
-        '<span class="team-icons">' + t.ids.map(function (id) { return icon(id, 32); }).join('') + '</span>' +
-        '<span class="saved-text"><span class="team-names">' + t.names.map(escapeHtml).join(' · ') + '</span>' +
-        '<small>' + where + '</small></span>' +
-        '<span class="team-score" title="Team score out of 100 when saved">' + t.score + '</span>' +
-        (live ? '</button>' : '</div>') +
-        '<button type="button" class="saved-remove" data-remove="' + i + '" aria-label="Remove ' + escapeHtml(t.names.join(', ')) + '">Remove</button></li>';
-    }).join('');
-  }
-
-  document.getElementById('saved-list').addEventListener('click', function (ev) {
-    var list = loadSaved();
-    var remove = ev.target.closest('button[data-remove]');
-    if (remove) {
-      list.splice(Number(remove.dataset.remove), 1);
-      storeSaved(list);
-      renderSaved();
-      refreshSaveButton();   // the open team may be the one just removed
-      return;
-    }
-    var open = ev.target.closest('button[data-saved]');
-    var t = open && list[Number(open.dataset.saved)];
-    if (!t) return;
-    revealResults = true;
-    if (location.hash === t.hash) resultsEl().scrollIntoView({ behavior: 'smooth', block: 'start' });
-    else location.hash = t.hash;   // the hashchange handler opens it, as for a pasted link
-  });
-
-  function refreshSaveButton() {
-    var btn = resultsEl().querySelector('[data-action="save-team"]');
-    var d = described[state.selected];
-    if (btn && d) btn.outerHTML = saveButton(d);
-  }
-
-  // ---- Compare the selected team with another suggestion ----
-
-  function teamLabel(i) {
-    return '#' + (i + 1) + ' ' + described[i].members.map(function (m) { return m.name; }).join(' · ');
-  }
-
-  function compareControl() {
-    if (described.length < 2) return '';
-    var options = described.map(function (d, i) {
-      if (i === state.selected) return '';
-      return '<option value="' + i + '"' + (i === state.compare ? ' selected' : '') + '>' + escapeHtml(teamLabel(i)) + ' (' + d.displayScore + ')</option>';
-    }).join('');
-    return '<label class="compare">Compare with <select data-action="compare"><option value="">another team…</option>' + options + '</select></label>';
-  }
-
-  function tallyOf(meta) {
-    var c = { win: 0, even: 0, loss: 0 };
-    (meta || []).forEach(function (t) { c[band(t.rating)]++; });
-    return c;
-  }
-
-  // Side by side: score, answers to the top 100, the top-30 tally, then the top-30 threats where
-  // the two teams land in different bands (win / toss-up / loss).
-  function compareBlock(d) {
-    var o = state.compare === null ? null : described[state.compare];
-    if (!o || !d.meta || !o.meta) return '';
-    var a = tallyOf(d.meta), b = tallyOf(o.meta);
-    var rank = { loss: 0, even: 1, win: 2 };
-    var better = [], worse = [];
-    d.meta.forEach(function (t, i) {
-      var mine = band(t.rating), theirs = band(o.meta[i].rating);
-      if (mine === theirs) return;
-      var item = { t: t, i: i, mine: mine, theirs: theirs };
-      (rank[mine] > rank[theirs] ? better : worse).push(item);
-    });
-    function row(label, x, y) {
-      return '<tr><th scope="row">' + label + '</th><td>' + x + '</td><td>' + y + '</td></tr>';
-    }
-    var me = '#' + (state.selected + 1), them = '#' + (state.compare + 1);
-    function diffList(title, items) {
-      if (!items.length) return '';
-      return '<div><h4>' + title + '</h4><ul class="diff-list">' + items.map(function (it) {
-        return '<li>' + icon(it.t.id, 32) + '<span><strong>' + escapeHtml(it.t.name) + '</strong><br><small>' +
-          me + ': ' + BAND_NAMES[it.mine] + ' · ' + them + ': ' + BAND_NAMES[it.theirs] + '</small></span></li>';
-      }).join('') + '</ul></div>';
-    }
-    var mineLabel = '#' + (state.selected + 1) + '<br><small>this team</small>', theirLabel = '#' + (state.compare + 1);
-    return '<section class="comparison" aria-label="Comparison with team ' + (state.compare + 1) + '">' +
-      '<table><thead><tr><td></td><th scope="col">' + mineLabel + '</th><th scope="col">' + theirLabel + '</th></tr></thead><tbody>' +
-      row('Team score', d.displayScore, o.displayScore) +
-      row('Winning answers, top ' + d.threatCount, d.beats, o.beats) +
-      row('Top 30: wins · toss-ups · losses', a.win + ' · ' + a.even + ' · ' + a.loss, b.win + ' · ' + b.even + ' · ' + b.loss) +
-      '</tbody></table>' +
-      (better.length || worse.length
-        ? '<p class="hint">Top-30 Pokémon the two teams get different results against (the rest are the same):</p>' +
-          '<div class="diffs">' + diffList(me + ' does better against', better) + diffList(them + ' does better against', worse) + '</div>'
-        : '<p class="hint">Same results against every Pokémon in the top 30.</p>') +
-      '</section>';
-  }
-
-  resultsEl().addEventListener('change', function (ev) {
-    var select = ev.target.closest('select[data-action="compare"]');
-    if (!select) return;
-    state.compare = select.value === '' ? null : Number(select.value);
-    save();
-    document.getElementById('team-detail').innerHTML = renderDetail(described[state.selected]);
-    var again = resultsEl().querySelector('select[data-action="compare"]');
-    if (again) again.focus();
-  });
-
   // The top 30 of the meta, each tinted by the team's best matchup against it. Tapping one names
   // the member that answers it in the note under the grid.
   function metaGrid(meta) {
@@ -878,20 +797,23 @@
       return '<span class="tally ' + b + '"><span class="swatch"></span>' + count[b] + ' ' + (count[b] === 1 ? one : many) + '</span>';
     }
     return '<section class="meta" aria-labelledby="meta-title">' +
-      '<div class="meta-head"><h3 id="meta-title">Against the top ' + meta.length + '</h3>' +
+      '<div class="meta-head"><h3 id="meta-title">Against the top <em class="v">' + meta.length + '</em></h3>' +
       '<p class="meta-tally">' + tally('win', 'win', 'wins') + tally('even', 'toss-up', 'toss-ups') + tally('loss', 'loss', 'losses') + '</p></div>' +
+      '<p class="hint">The ' + meta.length + ' you’ll meet most often, out of the 100 the team score counts.</p>' +
+      '<button type="button" class="chip skip" data-action="skip-meta">Skip the ' + meta.length + ' Pokémon</button>' +
       '<ol class="meta-grid">' + meta.map(function (t, i) {
         var b = band(t.rating);
         return '<li><button type="button" class="meta-cell ' + b + '" data-meta="' + i + '" aria-pressed="false" aria-label="#' + (i + 1) + ' ' +
           escapeHtml(t.name) + ': ' + BAND_NAMES[b] + '" title="#' + (i + 1) + ' ' + escapeHtml(t.name) + '">' +
           icon(t.id, 40) + '<span class="meta-rank">' + (i + 1) + '</span></button></li>';
-      }).join('') + '</ol>' +
-      '<p class="meta-note" aria-live="polite">Tap a Pokémon to see your best answer to it.</p></section>';
+      }).join('') +
+      // The note is a full-width row that moves under the tapped cell's row, so it reads beside it.
+      '<li class="meta-note-row" role="none"><p class="meta-note" aria-live="polite">Tap a Pokémon to see your best answer to it.</p></li></ol></section>';
   }
 
   function metaNote(t, i) {
-    return '<strong>#' + (i + 1) + ' ' + escapeHtml(t.name) + '</strong> ' + typeChips(t.types) + ' · best answer ' +
-      escapeHtml(t.answer) + ': <span class="verdict" title="Battle rating ' + t.rating + ' (500 is even)">' + verdict(t.rating) + '</span>';
+    return '<strong>#' + (i + 1) + ' ' + escapeHtml(t.name) + '</strong> ' + typeChips(t.types) + '<br>Best answer: ' +
+      escapeHtml(t.answer) + ' (<span class="verdict" title="Battle rating ' + t.rating + ' (500 is even)">' + verdict(t.rating) + '</span>)';
   }
 
   function copyLink(btn) {
@@ -911,6 +833,17 @@
   resultsEl().addEventListener('click', function (ev) {
     var share = ev.target.closest('button[data-action="share"]');
     if (share) { copyLink(share); return; }
+    // Keyboard: past the 30 grid cells to whatever follows the grid.
+    var skip = ev.target.closest('button[data-action="skip-meta"]');
+    if (skip) {
+      var next = skip.closest('.meta').nextElementSibling;
+      var target = next && (next.querySelector('summary') || next);
+      if (target) {
+        if (target.tabIndex < 0 && !target.matches('summary')) target.setAttribute('tabindex', '-1');
+        target.focus();
+      }
+      return;
+    }
     var line = ev.target.closest('button.member-line');
     if (line) {
       var open = line.getAttribute('aria-expanded') !== 'true';
@@ -924,13 +857,6 @@
       if (f) f.run();
       return;
     }
-    if (ev.target.closest('button[data-action="save-team"]') && described[state.selected]) {
-      toggleSaved(described[state.selected]);
-      refreshSaveButton();
-      var again = resultsEl().querySelector('[data-action="save-team"]');
-      if (again) again.focus();
-      return;
-    }
     var cell = ev.target.closest('button[data-meta]');
     var d = described[state.selected];
     if (cell && d && d.meta) {
@@ -938,18 +864,25 @@
       Array.prototype.forEach.call(resultsEl().querySelectorAll('.meta-cell'), function (c) {
         c.setAttribute('aria-pressed', String(c === cell));
       });
-      resultsEl().querySelector('.meta-note').innerHTML = metaNote(d.meta[i], i);
+      var note = resultsEl().querySelector('.meta-note');
+      note.innerHTML = metaNote(d.meta[i], i);
+      // Under the last cell of the tapped row (the column count changes with the screen width).
+      var grid = cell.closest('.meta-grid');
+      var cells = grid.querySelectorAll('.meta-cell');
+      var cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length || 1;
+      var end = cells[Math.min(Math.ceil((i + 1) / cols) * cols, cells.length) - 1].parentNode;
+      if (end.nextSibling !== note.parentNode) grid.insertBefore(note.parentNode, end.nextSibling);
       return;
     }
     var btn = ev.target.closest('button[data-team]');
     if (!btn || !described[Number(btn.dataset.team)]) return;
     state.selected = Number(btn.dataset.team);
-    if (state.compare === state.selected) state.compare = null;
     save();
     Array.prototype.forEach.call(resultsEl().querySelectorAll('.team-option'), function (b) {
       b.setAttribute('aria-pressed', String(b === btn));
     });
-    document.getElementById('team-detail').innerHTML = renderDetail(described[state.selected]);
+    var detail = document.getElementById('team-detail');
+    detail.innerHTML = renderDetail(described[state.selected]);
   });
 
   resultsEl().addEventListener('input', function (ev) {
@@ -976,7 +909,7 @@
     var key = contextKey(league);
     var hint = document.getElementById('top-teams-hint');
     var list = document.getElementById('top-list');
-    document.getElementById('top-teams-title').textContent = 'Top ' + LEAGUE_NAMES[league] + ' teams';
+    document.getElementById('top-teams-title').innerHTML = 'Top ' + escapeHtml(LEAGUE_NAMES[league]) + ' <em class="v">teams</em>';
     if (!topTeams[key]) {
       hint.textContent = 'Ranking teams…';
       list.innerHTML = '';
@@ -987,16 +920,19 @@
       setTimeout(function () {
         if (id !== topRunId) return;
         if (!topTeams[key]) topTeams[key] = window.Engine.bestTeams(ctx, 'any', TOP_COUNT);
-        hint.textContent = 'The highest-scoring teams of any typing' + (state.noElite ? ' without Elite TM moves' : '') +
-          ' from the top 50 Pokémon in ' + LEAGUE_NAMES[league] + '. Open one to see its moves and IVs.';
-        list.innerHTML = topTeams[key].map(function (t, i) {
-          var d = window.Engine.describeTeam(ctx, t);
+        var top = topTeams[key].map(function (t) { return window.Engine.describeTeam(ctx, t); });
+        // A layout tag every row shares says nothing; the hint says it once instead.
+        var sameLayout = top.length > 1 && top.every(function (d) { return d.layout === top[0].layout; });
+        hint.textContent = 'The highest-scoring teams with no typing rule' + (state.noElite ? ', without Elite TM moves' : '') +
+          ', built from the top 50 Pokémon in ' + LEAGUE_NAMES[league] + ' and scored against the top 100.' +
+          (sameLayout ? ' All ' + top.length + ' happen to be ' + top[0].layout + '.' : '') + ' Open one to see its moves and IVs.';
+        list.innerHTML = top.map(function (d, i) {
           return '<li><button type="button" class="top-team" data-top="' + i + '">' +
             '<span class="team-rank">' + (i + 1) + '</span>' +
             '<span class="team-icons">' + d.members.map(function (m) { return icon(m.id, 32); }).join('') + '</span>' +
-            '<span><span class="layout" title="Typing layout (lead / safe swap / closer)">' + d.layout + '</span> ' +
-            '<span class="team-score" title="Team score out of 100">' + d.displayScore + '</span></span>' +
-            '<span class="team-names">' + d.members.map(function (m) { return escapeHtml(m.name); }).join(' · ') + '</span>' +
+            '<span class="team-names">' + d.members.map(function (m) { return escapeHtml(m.name); }).join(NAME_SEP) + '</span>' +
+            (sameLayout ? '' : '<span class="layout" title="Typing layout (lead / safe swap / closer)">' + d.layout + '</span>') +
+            '<span class="team-score" title="Team score out of 100">' + d.displayScore + '</span>' +
             '</button></li>';
         }).join('');
       }, 30);
@@ -1015,8 +951,8 @@
     if (!window.Engine.assignRoles(team.members, state.style)) state.style = 'any';
     state.picks = [team.members[0].id, team.members[1].id, null];
     state.selected = 0;
-    state.compare = null;
     openThird = team.members[2].id;
+    formOpen = false;
     save();
     syncRadios();
     syncCombos();
@@ -1038,19 +974,47 @@
 
   function leagueChip(f, status) {
     return '<label' + (f.rules ? ' title="' + escapeHtml(f.rules) + '"' : '') + '><input type="radio" name="league" value="' +
-      escapeHtml(f.id) + '"> ' + escapeHtml(f.name.replace(/ League\b/, '')) + ' <small>' + escapeHtml(f.label) + '</small>' +
+      escapeHtml(f.id) + '"><span class="league-dot" data-family="' + leagueFamily(f) + '"></span>' +
+      escapeHtml(f.name.replace(/ League\b/, '')) + ' <small>' + escapeHtml(f.label) + '</small>' +
       (status || '') + '</label>';
   }
 
   // Three groups, in this order: live in GBL this week, always available, and starting within a week.
-  // League colour as the page accent, like the game: Great blue, Ultra gold, Master purple. Cups
-  // with their own rules get a neutral accent; the open Mega formats follow their CP cap.
+  // League colour, like the game: Great blue, Ultra gold, Master purple; cups with their own rules
+  // neutral, the open Mega formats by CP cap. It stamps league chips and the team's league
+  // (data-league on <html>); orange, not the league colour, marks what is selected.
+  function leagueFamily(f) {
+    return !f ? 'great' : f.cup !== 'all' && f.cup !== 'mega' ? 'cup'
+      : f.cp <= 1500 ? 'great' : f.cp <= 2500 ? 'ultra' : 'master';
+  }
+
   function applyAccent() {
     var f = FORMATS.filter(function (x) { return x.id === state.league; })[0];
-    var family = !f ? 'great' : f.cup !== 'all' && f.cup !== 'mega' ? 'cup'
-      : f.cp <= 1500 ? 'great' : f.cp <= 2500 ? 'ultra' : 'master';
-    document.documentElement.dataset.league = family;
+    document.documentElement.dataset.league = leagueFamily(f);
+    // The selected format's rules, so "Great (Megas)" and "Great" are told apart.
+    var rules = document.getElementById('league-rules');
+    syncLeagueRow();
+    rules.innerHTML = f ? '<strong>' + escapeHtml(f.name) + ':</strong> ' +
+      escapeHtml(f.rules || (f.cp < 10000 ? f.cp.toLocaleString('en') + ' CP cap. Mega Pokémon aren’t allowed.' : 'No CP cap. Mega Pokémon aren’t allowed.')) : '';
   }
+
+  // While a format is live and selected, only the live group shows, with a pill to show the rest.
+  // Picking a format outside it (a saved view, a shared link) always shows everything.
+  function syncLeagueRow() {
+    var live = FORMATS.filter(function (f) { return liveWeek(f.weeks); }).map(function (f) { return f.id; });
+    var selectedLive = live.indexOf(state.league) !== -1;
+    var liveOnly = selectedLive && !showAllLeagues;
+    var more = document.getElementById('league-more');
+    document.getElementById('league-options').classList.toggle('live-only', liveOnly);
+    more.hidden = !selectedLive || live.length === FORMATS.length;
+    more.textContent = liveOnly ? 'Show all leagues' : 'Show only live';
+    more.setAttribute('aria-expanded', String(!liveOnly));
+  }
+
+  document.getElementById('league-more').addEventListener('click', function () {
+    showAllLeagues = !showAllLeagues;
+    syncLeagueRow();
+  });
 
   function renderLeagueOptions() {
     var live = [], always = [], soon = [], until = null;
@@ -1060,9 +1024,9 @@
       else if (f.cup === 'all') always.push(f);
       else soon.push(f);
     });
-    function group(name, items, chip) {
+    function group(name, items, chip, cls) {
       if (!items.length) return '';
-      return '<div class="league-group" role="group" aria-label="' + escapeHtml(name) + '"><span class="group-label">' +
+      return '<div class="league-group' + (cls ? ' ' + cls : '') + '" role="group" aria-label="' + escapeHtml(name) + '"><span class="group-label">' +
         escapeHtml(name) + '</span>' + items.map(chip).join('') + '</div>';
     }
     document.getElementById('league-options').innerHTML =
@@ -1080,7 +1044,8 @@
     note.innerHTML = missing.length ? 'Also live in GO Battle League: ' + missing.join(', ') + ' (no public rankings to build from).' : '';
   }
 
-  // Scrolls the league row (phone: one sideways row) so the selected format is in view.
+  // Scrolls the league row so the selected format is in view, if it ever scrolls sideways (phones
+  // now wrap it, so this is a safeguard).
   function revealLeague() {
     var row = document.getElementById('league-options');
     var chip = row.querySelector('input:checked');
@@ -1124,7 +1089,8 @@
   window.addEventListener('hashchange', function () {
     var shared = readHash();
     if (!shared || location.hash === hashFor(state)) return;
-    applySaved(state, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected, noElite: shared.noElite, compare: shared.compare });
+    applySaved(state, { league: shared.league, style: shared.style, picks: shared.picks.concat([null, null]), selected: shared.selected, noElite: shared.noElite });
+    formOpen = false;
     save();
     syncRadios();
     revealLeague();
@@ -1144,7 +1110,6 @@
         var previous = state[field];
         state[field] = input.value;
         state.selected = 0;
-        state.compare = null;
         save();
         if (onChange) onChange(previous);
       });
@@ -1163,7 +1128,6 @@
   useElite.addEventListener('change', function () {
     state.noElite = !useElite.checked;
     state.selected = 0;
-    state.compare = null;
     save();
     runSearch();
     renderTopTeams();
@@ -1184,6 +1148,4 @@
   }
   runSearch(startNotice);
   renderTopTeams();
-  // Saved teams show their icons, so wait for the image map.
-  window.PvpData.images().then(function (map) { images = map; renderSaved(); }, function () { renderSaved(); });
 })();

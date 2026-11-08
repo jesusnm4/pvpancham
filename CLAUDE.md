@@ -51,12 +51,10 @@ milestones live in `PLAN.md`.
   the user's own Chrome, at desktop and 390px widths, light and dark, over http and `file://`,
   with no console errors.
 - State lives in two places: `localStorage` (`pvphelper-state-v1` for the view,
-  `pvphelper-ivs-v1` for IVs the viewer typed, per species, `pvphelper-saved-v1` for saved teams,
-  each re-validated by `loadSaved`) and the URL hash (`#l=&s=&p=&t=&e=&c=`, see
+  `pvphelper-ivs-v1` for IVs the viewer typed, per species) and the URL hash (`#l=&s=&p=&t=&e=`, see
   `hashFor`/`readHash` in `app.js`; `e=0` means "Use Elite moves" is off, `noElite` in state;
-  `c` is the 1-based team compared with the selected one, `compare` in state, cleared whenever
-  the selection resets). `pilotHidden` (whether "How to play it" is closed) is saved locally only,
-  via `saveLocal()`: the `<details>` toggle event can fire late, so it must never touch the URL. A saved team stores its view's hash and reopens through `hashchange`. A hash on load wins over saved state. Engine contexts are cached per
+  old links may carry `c=` from the removed comparison, which is ignored and dropped). `pilotHidden` (whether "How to play it" is closed) is saved locally only,
+  via `saveLocal()`: the `<details>` toggle event can fire late, so it must never touch the URL. A hash on load wins over saved state. Engine contexts are cached per
   league and Elite TM setting (`contextKey`).
   Picks are up to three slots, kept filled-first by `compactPicks`; three picks are the viewer's
   own team (`suggest` returns just that team, and the style doesn't apply). The third field shows

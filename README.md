@@ -29,6 +29,7 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
 | 11. Use Elite moves option | ✅ done |
 | 12. Design, phone first | ✅ done |
 | 13. Piloting advice | ✅ done |
+| 14. Redesign (orange, charcoal and paper; self-hosted fonts) | ✅ done |
 
 ## Features
 
@@ -40,8 +41,10 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   the "+" Mega move some of them get as a third charged move, marked **Mega**
 - Team styles: ABC (balanced, no shared types), Shared type (two members share a type, as ABB or
   ABA), or Best score (no typing rule); each suggested team is tagged with its layout
-- Formats grouped as **Live** this week, **Always** (the open leagues) and **Coming up**; on a
-  phone they sit in one row you swipe sideways
+- Formats grouped as **Live** this week, **Always** (the open leagues) and **Coming up**, live
+  first; while a live format is selected only the live ones show, with **Show all leagues** for
+  the rest; a first visit opens on this week's live format, and the selected format's rules are
+  shown under the list
 - **Top teams**: the three highest-scoring teams overall (any typing) built from the top 50
   Pokémon of the selected league or cup, shown under the form before you pick anything (and
   below your results after); pick one to open it
@@ -56,19 +59,17 @@ two Pokémon to get suggested teams, share them as a link, and check your own Po
   a grid of the league's top 30 Pokémon tinted win / toss-up / loss by the team's best matchup
   (tap one to see which member answers it); its 3 closest matchups; and each attack type that
   hits two or more members super-effectively, with which ones
-- The page takes the league's colour: blue for Great, gold for Ultra, purple for Master
+- Each league carries its colour as a dot: blue for Great, gold for Ultra, purple for Master
 - Each team member says what its role means (lead starts the battle, safe swap comes in when
   the lead is losing, closer finishes)
 - **How to play it** (collapsible, remembered): short advice for each team: who to lead with, which opposing leads to
   switch away from, what the closer is kept for, fast moves to the first charged move, and types
   to watch out for, all from simulated battles against the top 30
-- **Compare with** another suggested team: score, winning answers to the top 100, the top-30
-  wins / toss-ups / losses, and the top-30 Pokémon one team handles better than the other (kept
-  in the link)
-- On a phone each team member is one line (icon, name, role, moves); tap it for the full card
-- **Save team** keeps teams you like on this device under "Your saved teams"; tap one to reopen it
+- On a phone each team member is one line (icon, name, role, moves); tap it for the full card.
+  Once you've picked, the form folds to one line (league, picks, style) with **+ Add Pokémon**
+  and **Edit**
 - Dead ends come with a one-tap fix: two Megas picked offers to remove either, picks dropped by a
-  league change offer to go back, a team style with no team offers the other styles, and a failed
+  league change are named under the league row with an offer to go back, a team style with no team offers the other styles, and a failed
   data load offers to reload
 - **Check your IVs** on any team member: your spread's rank among all IV combinations, its stat
   product as a % of rank 1, and the level and CP it reaches under the cap
@@ -165,6 +166,10 @@ non-commercial fan tool and removable on request.
 The GO Battle League schedule is read from Pokémon GO's game master (© Niantic), as published by
 [alexelgt/game_masters](https://github.com/alexelgt/game_masters) and
 [PokeMiners/game_masters](https://github.com/PokeMiners/game_masters).
+
+Fonts: [Be Vietnam Pro](https://github.com/bettergui/BeVietnamPro) and
+[Platypi](https://github.com/d-sargent/platypi), both under the SIL Open Font License 1.1 (texts in
+`fonts/`), self-hosted so the page never loads anything from another site.
 
 Pokémon data and rankings come from [PvPoke](https://pvpoke.com)
 ([source](https://github.com/pvpoke/pvpoke), MIT License, © 2019 pvpoke). Pokémon and Pokémon GO

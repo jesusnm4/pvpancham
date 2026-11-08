@@ -147,6 +147,7 @@ the site also works when opened over `file://`.
 
 ```
 js/theme.js    light/dark theme, applied before first paint
+fonts/         self-hosted woff2 (Be Vietnam Pro, Platypi italic) and their OFL licences
 js/data.js     loads data/*.js on demand
 js/engine.js   pure logic: type chart, CP/IV math, battle simulator, team scoring. No DOM.
 js/app.js      state, form wiring, rendering
@@ -203,6 +204,8 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
       suggestion (score, answers to the top 100, top-30 tally, and the top-30 threats where they
       land in different bands), kept in the link as `c=` and across reloads; **saved teams** on
       this device (`pvphelper-saved-v1`, up to 12), reopened from a "Your saved teams" panel. ✅
+      (Compare with and saved teams were removed again with the redesign, milestone 14: they
+      added little. Old links with `c=` still open, without the comparison.)
 13. **Piloting advice:** "How to play it" on each team, built from `describeTeam().pilot`: what the
    lead wins alone, which opposing leads to switch away from (lead loses, safe swap wins), the
    top-30 threats only the closer beats, fast moves to the first charged move, and shared
@@ -218,7 +221,31 @@ tests.html     runs js/engine.test.js in the browser (scripts/run-tests.js runs 
    that team alone (roles assigned, no typing rule), shown as "Your team" with no team list or
    comparison, and the team style is disabled while three are picked (with a note saying why).
    The third field appears once two are picked, and the search lists leave out a second Mega.
-14. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
+14. **Redesign: the PvPancham look**, after funtownstudio.com as a visual guide (direction brief
+   in `.impeccable/`, system in `DESIGN.md`): dotted pale-grey paper with charcoal bands for the
+   header, the team block and the footer; one orange (`#f66c40`, ink text on it; Ember `#b83d12`
+   where orange is text or a line on a light ground) for every action and selected state; league
+   colours kept as a dot on each league chip and on the team's league; losses moved to crimson so
+   they never read as the brand orange. Self-hosted fonts in `fonts/` (OFL): Be Vietnam Pro for
+   everything, Platypi italic for one word per heading and the role words. Every control a pill;
+   team lists and top teams as numbered hairline rows; the selected team as a
+   charcoal block with its score and the three members, numbered 01/03 to 03/03, directly under
+   it. Be Vietnam Pro has no tabular figures, so columns that must line up (comparison table,
+   IVs) use the system face. Compare with and saved teams removed (little value). After an
+   Impeccable critique (29/40): on phones the form folds to a one-line summary with Edit once
+   something is picked, and league groups wrap instead of scrolling sideways; a league change
+   names the picks it dropped under the league row, with the undo beside it; meta-grid ranks sit
+   on a readable tab and the tapped cell's note opens under its row; hints read at 16px on
+   phones and long text is capped at about 72ch; zero-padding kept only for the members' play
+   order (01, 02, 03); the top 30 / 50 / 100 counts explained where they appear. A second
+   critique (30/40) led to: "+ Add Pokémon" on the folded form; labelled IVs (Atk ·
+   Def · HP) and plain PvPoke rank wording; the selected format's rules under the league row and
+   a first visit opening on this week's live format; member lines that wrap their moves; your
+   picks muted in suggestion rows so the new partner stands out; desktop member cards aligned.
+   A third critique (32/40) led to: only this week's live formats in the league picker until "Show all leagues"; quick picks
+   with their label above the row; "Best answer: X (verdict)"; no repeated ABC note or tags; a
+   shorter results hint; a keyboard skip past the meta grid. ✅
+15. **Later (optional):** closer simulator accuracy (chance buffs, Aegislash, Morpeko, smarter
    shielding), and limited-format cups.
 
 ## Research: Pokémon images
